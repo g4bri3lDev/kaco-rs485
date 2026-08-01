@@ -39,6 +39,7 @@ from .protocol import (
     parse_cmd9,
     verify_checksum,
 )
+from .status import status_text
 from .transport import AsyncBus, BusError, Reply
 
 PROBE_COMMANDS = [
@@ -70,7 +71,7 @@ def describe(command: str, raw: bytes) -> str:
             ok, expected, actual = verify_checksum(raw)
             chk = "CHK ok" if ok else f"CHK BAD (want {expected:#04x}, got {actual:#04x})"
             return (
-                f"{m.inverter_type} status={m.status} "
+                f"{m.inverter_type} [{status_text(m.status)}] "
                 f"dc={m.dc_power_w}W ac={m.ac_power_w}W {m.ac_voltage_v}V "
                 f"{m.temperature_c}degC daily={m.daily_yield_wh}Wh  {chk}"
             )
@@ -179,7 +180,7 @@ async def cmd_poll(bus: AsyncBus, args: argparse.Namespace) -> int:
             print(
                 f"  {stamp}  addr={address:02d}  {m.ac_power_w:5d}W  "
                 f"{m.ac_voltage_v:6.1f}V  {m.temperature_c:3d}degC  "
-                f"status={m.status}{avail}"
+                f"{status_text(m.status)}{avail}"
             )
         print()
         await asyncio.sleep(args.interval)

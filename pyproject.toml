@@ -1,0 +1,49 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kaco-rs485"
+version = "0.1.0"
+description = "Read KACO Powador xi-series inverters over RS485, locally or via an ESPHome serial proxy."
+readme = "README.md"
+requires-python = ">=3.13"
+license = { text = "Apache-2.0" }
+authors = [{ name = "g4bri3lDev", email = "admin@g4bri3l.de" }]
+keywords = ["rs485", "kaco", "powador", "solar", "home-assistant", "esphome"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Home Automation",
+]
+# serialx replaces pyserial and gives us every transport for free: local
+# devices, socket://, and ESPHome serial proxies. Core pins 1.8.2.
+dependencies = ["serialx>=1.8.2,<2"]
+
+[project.optional-dependencies]
+# Only the standalone CLI needs this — inside Home Assistant, the `esphome`
+# integration already provides aioesphomeapi and registers the URI handler.
+cli = ["serialx[esphome]>=1.8.2,<2"]
+
+[project.scripts]
+kaco-rs485 = "kaco_rs485.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/g4bri3lDev/kaco-rs485"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "mypy>=1.14",
+    "ruff>=0.8",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kaco_rs485"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100

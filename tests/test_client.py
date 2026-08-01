@@ -175,3 +175,70 @@ async def test_parse_errors_do_not_count_as_a_missing_inverter() -> None:
     assert client.states[1].consecutive_misses == 0
     assert client.states[1].available
     assert client.states[1].measured is None
+
+
+# --- retry policy --------------------------------------------------------
+
+
+class FlakyBus:
+    """Returns `script` entries in order, then good frames forever."""
+
+    def __init__(self, script: list[bytes]) -> None:
+        self.script = list(script)
+        self.requests: list[tuple[int, str]] = []
+
+    async def request(self, address: int, command: str) -> Reply:
+        self.requests.append((address, command))
+        raw = self.script.pop(0) if self.script else CMD0_FRAME
+        return Reply(request=b"", raw=raw, elapsed_ms=2000.0)
+
+
+GARBAGE = b"\n*01" + b"\x00" * 60
+
+
+async def test_corrupt_reply_is_retried() -> None:
+    bus = FlakyBus([GARBAGE, GARBAGE, CMD0_FRAME])
+    client = KacoRs485Client(bus, [1])  # type: ignore[arg-type]
+
+    await client.poll_cycle()
+
+    cmd0 = [r for r in bus.requests if r[1] == "0"]
+    assert len(cmd0) == 3, "should have retried the two garbled frames"
+    assert client.states[1].measured is not None
+
+
+async def test_silence_is_never_retried() -> None:
+    """A dead address must cost one timeout, not three.
+
+    Retrying silence would triple the cost of every dark inverter at night,
+    which is exactly what the backoff exists to avoid.
+    """
+    bus = FakeBus(alive=set())
+    client = KacoRs485Client(bus, [1])  # type: ignore[arg-type]
+
+    await client.poll_cycle()
+
+    assert len(bus.requests) == 2, "one request per command, no retries"
+    assert client.states[1].consecutive_misses == 1
+
+
+async def test_retries_are_capped() -> None:
+    bus = FlakyBus([GARBAGE] * 10)
+    client = KacoRs485Client(bus, [1], max_attempts=3)  # type: ignore[arg-type]
+
+    await client.poll_cycle()
+
+    assert len([r for r in bus.requests if r[1] == "0"]) == 3
+
+
+async def test_persistent_corruption_keeps_the_inverter_available() -> None:
+    """Garbled frames prove the inverter is alive; only silence means absent."""
+    bus = FlakyBus([GARBAGE] * 100)
+    client = KacoRs485Client(bus, [1])  # type: ignore[arg-type]
+
+    for _ in range(SLEEP_AFTER_MISSES + 1):
+        await client.poll_cycle()
+
+    assert client.states[1].consecutive_misses == 0
+    assert client.states[1].available
+    assert client.states[1].measured is None

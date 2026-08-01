@@ -64,9 +64,21 @@ def is_complete(raw: bytes, command: str) -> bool:
     `raw` is expected to be already trimmed by `trim_leading_junk`.
     """
     if command == "0":
-        # Length-gate first, precisely because the checksum byte at offset 57
-        # can itself be CR. Only look for the terminator beyond it.
-        return len(raw) >= MIN_CMD0_LEN and CR in raw[MIN_CMD0_LEN:]
+        # Length-gate first, then look for CR from the checksum byte onwards.
+        #
+        # The checksum at offset 57 can itself be CR, which is why the length
+        # gate has to come first — but it is safe to *accept* a CR there. Every
+        # byte before offset 57 is ASCII numeric or space and so cannot be
+        # 0x0D, meaning the earliest possible CR is the last byte the frame
+        # needs. A CR at 57 therefore ends the frame exactly on time rather
+        # than truncating it. The vendor datalogger's own driver does the same:
+        # break on CR, require count >= 58, checksum buf[1..56] against
+        # buf[57].
+        #
+        # Scanning from MIN_CMD0_LEN instead would still be correct, but would
+        # wait out the inter-byte gap on every frame whose checksum happens to
+        # be CR.
+        return len(raw) >= MIN_CMD0_LEN and CR in raw[MIN_CMD0_LEN - 1 :]
 
     if command in ("3", "8"):
         # No trailing checksum byte in these shapes, so the first CR past the

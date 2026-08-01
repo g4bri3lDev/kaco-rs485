@@ -94,6 +94,39 @@ from the KACO specification:
 - Status codes **4 (feeding in)** and **6 (standby)** are observed in the
   field but absent from the specification's table.
 
-`tests/reference/captures.json` holds real frames from the live bus. The
-framing tests replay them split at every possible byte boundary, because
-through a network proxy the arrival chunking is arbitrary.
+`tests/reference/` holds real frames from a live bus. The framing tests replay
+them split at every possible byte boundary, because through a network proxy the
+arrival chunking is arbitrary.
+
+## Contributing a capture
+
+This library is developed against Powador **6400xi** and **8000xi** units. Other
+KACO hardware very likely works, or would with a small change, but that cannot
+be confirmed without bytes from someone who owns it. A capture from your
+installation is the single most useful contribution.
+
+```bash
+kaco-rs485 --url <url> --log-dir captures sweep
+```
+
+Open a pull request adding the resulting `.json` to `tests/reference/`. It is
+picked up automatically — every parser and framing test will run against it, so
+a file that breaks nothing is evidence your hardware is supported, and a file
+that breaks something is a bug report with a reproduction attached.
+
+Especially wanted:
+
+- **Other xi-series units** (2500xi, 3600xi, 4200xi, 5000xi…). Expected to use
+  the same series-"00" frames; confirmation is cheap and valuable.
+- **Series "000xi"** park inverters. These answer with command byte `4` instead
+  of `0` and need a parser that does not exist yet.
+- **blueplanet / TL / TR units**, which speak CRC16 Generic Protocol
+  (command byte `n`). A whole second protocol; captures are the prerequisite
+  for deciding whether to implement it here.
+
+**Before you open the PR, look at what is in the file.** A capture contains
+your total yield, operating hours, and — if command `s` answered — the
+inverter's serial number. None of it is dangerous, but total yield and uptime
+do describe the size and age of your installation, so it is your call. Deleting
+the `8`/`9`/`s` entries and keeping only `0` and `3` still makes a useful
+fixture.

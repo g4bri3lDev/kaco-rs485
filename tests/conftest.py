@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-REFERENCE = Path(__file__).parent / "reference" / "captures.json"
+REFERENCE_DIR = Path(__file__).parent / "reference"
 
 
 @dataclass(frozen=True)
@@ -29,16 +29,29 @@ class Capture:
 
 
 def _load() -> list[Capture]:
-    entries = json.loads(REFERENCE.read_text())
-    return [
-        Capture(
-            session=e["session"],
-            address=e["address"],
-            command=e["command"],
-            raw=bytes.fromhex(e["rx_hex"]),
-        )
-        for e in entries
-    ]
+    """Load every capture file in `tests/reference/`.
+
+    Any JSON written by `kaco-rs485 sweep --log-dir` drops straight in — that
+    is deliberate. Supporting a KACO series we do not own requires bytes from
+    somebody who does, and the cost of contributing should be "run one command
+    and open a PR with the file", not "learn our fixture format".
+    """
+    captures: list[Capture] = []
+    for path in sorted(REFERENCE_DIR.glob("*.json")):
+        for entry in json.loads(path.read_text()):
+            raw = bytes.fromhex(entry["rx_hex"])
+            if not raw:  # non-responding addresses are recorded too
+                continue
+            captures.append(
+                Capture(
+                    # `session` is optional: sweep output does not carry one.
+                    session=entry.get("session", path.stem),
+                    address=entry["address"],
+                    command=entry["command"],
+                    raw=raw,
+                )
+            )
+    return captures
 
 
 ALL_CAPTURES = _load()

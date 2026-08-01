@@ -7,10 +7,14 @@ adapter on a live bus:
              Transmits nothing, so it is safe to run while another master is
              still connected.
 
-    sweep    Which addresses answer, and what are they? One pass of the
-             identification commands per address, with hexdumps.
+    scan     Which addresses are occupied, and what is at them? Probes the
+             whole bus unless told otherwise.
+
+    sweep    Everything one address can tell you: all probe commands, with
+             hexdumps.
 
     poll     Does it keep working? Continuous cycles with the real pacing.
+             Scans first if no addresses are given.
 
 `--url` accepts anything serialx understands:
 
@@ -29,6 +33,7 @@ import sys
 from pathlib import Path
 
 from .client import CYCLE_COMMANDS, KacoRs485Client
+from .discovery import ALL_ADDRESSES, scan
 from .framing import trim_leading_junk
 from .protocol import (
     ParseError,
@@ -141,7 +146,7 @@ async def cmd_sweep(bus: AsyncBus, args: argparse.Namespace) -> int:
     responded: set[int] = set()
     saw_bytes = False
 
-    for address in args.addresses:
+    for address in args.addresses or ALL_ADDRESSES:
         for command, label in PROBE_COMMANDS:
             try:
                 reply = await bus.request(address, command)
@@ -163,9 +168,52 @@ async def cmd_sweep(bus: AsyncBus, args: argparse.Namespace) -> int:
     return 0 if responded else 1
 
 
+async def cmd_scan(bus: AsyncBus, args: argparse.Namespace) -> int:
+    """Ask every address who is there."""
+    targets = args.addresses or list(ALL_ADDRESSES)
+    print(f"[+] Scanning addresses {targets[0]}-{targets[-1]}.")
+    print(f"[+] Silent addresses cost ~2.5 s each, so allow up to {len(targets) * 3}s.\n")
+
+    def progress(done: int, total: int) -> None:
+        print(f"\r    {done}/{total}", end="", flush=True)
+
+    result = await scan(bus, targets, on_progress=progress)
+    print("\r" + " " * 20 + "\r", end="")
+
+    for device in result.supported:
+        kind = device.inverter_type or "type unknown (short frame)"
+        print(f"  addr={device.address:02d}  {kind}")
+    for device in result.unsupported:
+        print(
+            f"  addr={device.address:02d}  CRC16 Generic Protocol — not an xi unit.\n"
+            "              This is a blueplanet or TL/TR device; read it with "
+            "kaco-modbus over Modbus TCP instead."
+        )
+
+    if not result.found:
+        print("[+] Nothing answered.\n")
+        print(diagnose_silence(seen_any_bytes=result.saw_any_bytes))
+        print("\n    Note: xi units stop answering entirely at night. If the sun is")
+        print("    down, an empty scan tells you nothing about your wiring.")
+        return 1
+
+    found = [d.address for d in result.supported]
+    print(f"\n[+] {len(found)} readable inverter(s): {found}")
+    return 0
+
+
 async def cmd_poll(bus: AsyncBus, args: argparse.Namespace) -> int:
-    client = KacoRs485Client(bus, args.addresses)
-    print(f"[+] Polling {args.addresses}, commands {list(CYCLE_COMMANDS)}. Ctrl-C to stop.\n")
+    addresses = args.addresses
+    if not addresses:
+        print("[+] No --addresses given; scanning the bus first.\n")
+        result = await scan(bus, ALL_ADDRESSES)
+        addresses = [d.address for d in result.supported]
+        if not addresses:
+            print("[!] Nothing to poll — no xi units answered.")
+            return 1
+
+    client = KacoRs485Client(bus, addresses)
+    print(f"[+] Polling {addresses}, commands {list(CYCLE_COMMANDS)}. Ctrl-C to stop.\n")
 
     while True:
         await client.poll_cycle()
@@ -231,6 +279,8 @@ async def _run(args: argparse.Namespace) -> int:
     try:
         if args.mode == "listen":
             return await cmd_listen(bus, args)
+        if args.mode == "scan":
+            return await cmd_scan(bus, args)
         if args.mode == "sweep":
             return await cmd_sweep(bus, args)
         return await cmd_poll(bus, args)
@@ -251,14 +301,19 @@ def main(argv: list[str] | None = None) -> int:
     listen = sub.add_parser("listen", help="passive monitor, transmits nothing")
     listen.add_argument("--seconds", type=int, default=30)
 
-    for name, help_ in (("sweep", "probe addresses once"), ("poll", "poll continuously")):
+    modes = (
+        ("scan", "find out which addresses are occupied"),
+        ("sweep", "run every probe command against given addresses"),
+        ("poll", "poll continuously"),
+    )
+    for name, help_ in modes:
         p = sub.add_parser(name, help=help_)
         p.add_argument(
             "--addresses",
             nargs="+",
             type=int,
-            default=[1, 2, 4],
-            help="RS485 addresses (default: the three xi units)",
+            default=None,
+            help="RS485 addresses; omit to scan the whole bus (1-32)",
         )
         if name == "poll":
             p.add_argument("--interval", type=float, default=10.0)

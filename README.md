@@ -35,11 +35,14 @@ Assistant integration built on this library stores no host and no API key.
 
 ```python
 from kaco_rs485 import AsyncBus, KacoRs485Client
+from kaco_rs485.discovery import scan
 
 async with AsyncBus("esphome://proxy.local:6053/?port_name=RS-485") as bus:
-    client = KacoRs485Client(bus, addresses=[1, 2, 4])
+    found = await scan(bus)
+    client = KacoRs485Client(bus, [d.address for d in found.supported])
     states = await client.poll_cycle()
-    print(states[1].measured.ac_power_w)
+    for address, state in states.items():
+        print(address, state.measured.ac_power_w)
 ```
 
 `KacoRs485Client` owns the pacing. Don't drive `AsyncBus` from two tasks at
@@ -54,11 +57,15 @@ Three CLI modes, in the order you actually need them:
 #    Transmits nothing — safe while another master is still connected.
 kaco-rs485 --url <url> listen --seconds 30
 
-# 2. Which addresses answer, and what are they?
-kaco-rs485 --url <url> sweep --addresses 1 2 3 4 5 -v
+# 2. Which addresses are occupied, and what is at them?
+#    Probes all 32 addresses; a silent one costs ~2.5s.
+kaco-rs485 --url <url> scan
 
-# 3. Does it keep working?
-kaco-rs485 --url <url> poll --addresses 1 2 4
+# 3. Everything one address can tell you.
+kaco-rs485 --url <url> sweep --addresses 2 -v
+
+# 4. Does it keep working? Scans first if you omit --addresses.
+kaco-rs485 --url <url> poll
 ```
 
 When nothing answers, the CLI prints a diagnostic checklist rather than just a

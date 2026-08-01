@@ -145,7 +145,20 @@ async def cmd_listen(bus: AsyncBus, args: argparse.Namespace) -> int:
 
     print(f"\n[+] {len(seen)} bytes in {args.seconds}s")
     if not seen:
-        print("\n" + diagnose_silence(seen_any_bytes=False))
+        # Silence here is only evidence of a fault if something else is
+        # actively polling. KACO inverters never transmit unprompted, so on a
+        # bus with no master an empty listen is the expected result and says
+        # nothing whatsoever about the wiring. Leading with the fault
+        # checklist would send people hunting a problem they do not have.
+        print(
+            "\n[+] Nothing heard.\n"
+            "    This is the correct result unless another device is actively\n"
+            "    polling — KACO inverters only speak when asked. If nothing\n"
+            "    else is connected to this bus, go straight to `scan`, which\n"
+            "    asks.\n"
+        )
+        print("    If something *should* have been polling, then:\n")
+        print(diagnose_silence(seen_any_bytes=False))
     elif not trim_leading_junk(seen):
         print(
             "\n[!] Bytes arrived but none was an LF, so nothing can frame.\n"

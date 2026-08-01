@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from types import TracebackType
 from typing import Self
 
@@ -39,9 +39,35 @@ class Reply:
     raw: bytes
     elapsed_ms: float
 
+    arrivals: list[tuple[float, int]] = field(default_factory=list)
+    """(ms since the request was written, bytes in that chunk), per read.
+
+    Recorded so the timeout constants can be checked against reality instead
+    of trusted. `first_byte_ms` and `max_gap_ms` below are the two numbers the
+    constants are actually derived from — but note that reading through a
+    network proxy adds its own batching, so these measure the whole path, not
+    the wire alone.
+    """
+
     @property
     def responded(self) -> bool:
         return bool(self.raw)
+
+    @property
+    def first_byte_ms(self) -> float | None:
+        """When the reply started. Compare against `start_timeout_s`."""
+        return self.arrivals[0][0] if self.arrivals else None
+
+    @property
+    def max_gap_ms(self) -> float | None:
+        """Longest silence *inside* the reply. Compare against `gap_s`.
+
+        On xi units this is expected to exceed 250 ms, from the documented
+        pause between the checksum byte and the trailing type string.
+        """
+        if len(self.arrivals) < 2:
+            return None
+        return max(b[0] - a[0] for a, b in zip(self.arrivals, self.arrivals[1:], strict=False))
 
 
 class BusError(Exception):
@@ -62,10 +88,18 @@ class AsyncBus:
         *,
         baudrate: int = 9600,
         key: str | None = None,
+        start_timeout_s: float = framing.REPLY_START_TIMEOUT_S,
+        gap_s: float = framing.REPLY_GAP_S,
     ) -> None:
+        """`start_timeout_s` and `gap_s` default to values measured against
+        Powador xi units. Raise them for slower hardware, longer cable runs,
+        or a congested network path to a proxy.
+        """
         self._url = url
         self._baudrate = baudrate
         self._key = key
+        self._start_timeout_s = start_timeout_s
+        self._gap_s = gap_s
         self._reader: asyncio.StreamReader | None = None
         self._writer: asyncio.StreamWriter | None = None
 
@@ -123,8 +157,13 @@ class AsyncBus:
             raise BusError(f"write failed: {err}") from err
 
         t0 = time.monotonic()
-        raw = await self._read_reply(command)
-        return Reply(request=frame, raw=raw, elapsed_ms=(time.monotonic() - t0) * 1000)
+        raw, arrivals = await self._read_reply(command, t0)
+        return Reply(
+            request=frame,
+            raw=raw,
+            elapsed_ms=(time.monotonic() - t0) * 1000,
+            arrivals=arrivals,
+        )
 
     async def read_raw(self, timeout: float) -> bytes:
         """Read whatever arrives within `timeout`, transmitting nothing.
@@ -141,13 +180,14 @@ class AsyncBus:
         except OSError as err:
             raise BusError(f"read failed: {err}") from err
 
-    async def _read_reply(self, command: str) -> bytes:
+    async def _read_reply(self, command: str, t0: float) -> tuple[bytes, list[tuple[float, int]]]:
         assert self._reader is not None
         buf = b""
+        arrivals: list[tuple[float, int]] = []
         while True:
             # First byte gets the long window (replies start 1-2 s late);
             # subsequent bytes only need to clear the mid-frame pause.
-            timeout = framing.REPLY_START_TIMEOUT_S if not buf else framing.REPLY_GAP_S
+            timeout = self._start_timeout_s if not buf else self._gap_s
             try:
                 chunk = await asyncio.wait_for(self._reader.read(256), timeout)
             except TimeoutError:
@@ -158,11 +198,12 @@ class AsyncBus:
             if not chunk:  # port closed underneath us
                 break
 
+            arrivals.append(((time.monotonic() - t0) * 1000, len(chunk)))
             buf = framing.trim_leading_junk(buf + chunk)
             if buf and framing.is_complete(buf, command):
                 break
 
-        return buf
+        return buf, arrivals
 
     async def _discard_stale(self) -> None:
         """Drop anything already on the wire before transmitting.

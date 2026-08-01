@@ -22,6 +22,10 @@ from dataclasses import dataclass, field
 from .protocol import MeasuredValues, ParseError, TotalYield, parse_cmd0, parse_cmd3
 from .transport import AsyncBus
 
+# Defaults, all overridable per client. These came out of debugging a real
+# three-inverter installation; they are reasonable starting points, not
+# protocol requirements.
+
 # Bus-settle gap between consecutive requests.
 POLL_GAP_S = 1.0
 
@@ -45,19 +49,20 @@ class InverterState:
     totals: TotalYield | None = None
     consecutive_misses: int = 0
     last_polled: float = field(default=0.0)
+    sleep_after: int = SLEEP_AFTER_MISSES
 
     @property
     def asleep(self) -> bool:
         """True once the inverter has missed enough polls to be considered dark."""
-        return self.consecutive_misses >= SLEEP_AFTER_MISSES
+        return self.consecutive_misses >= self.sleep_after
 
     @property
     def available(self) -> bool:
         """False means consumers should render this inverter as unavailable.
 
-        Deliberately the same threshold as `asleep`: the ESPHome component
-        published NAN at exactly this transition, and matching it keeps HA
-        history continuous across the migration.
+        Deliberately the same threshold as `asleep`. A dark inverter must not
+        keep reporting the last value it managed to send — that is how a
+        dashboard ends up showing yesterday's watts at midnight.
         """
         return not self.asleep
 
@@ -65,10 +70,21 @@ class InverterState:
 class KacoRs485Client:
     """Round-robins a set of addresses over a single shared bus."""
 
-    def __init__(self, bus: AsyncBus, addresses: list[int]) -> None:
+    def __init__(
+        self,
+        bus: AsyncBus,
+        addresses: list[int],
+        *,
+        poll_gap_s: float = POLL_GAP_S,
+        sleep_after_misses: int = SLEEP_AFTER_MISSES,
+        sleep_retry_s: float = SLEEP_RETRY_S,
+    ) -> None:
         self._bus = bus
+        self._poll_gap_s = poll_gap_s
+        self._sleep_retry_s = sleep_retry_s
         self.states: dict[int, InverterState] = {
-            addr: InverterState(address=addr) for addr in addresses
+            addr: InverterState(address=addr, sleep_after=sleep_after_misses)
+            for addr in addresses
         }
 
     async def poll_cycle(self) -> dict[int, InverterState]:
@@ -78,7 +94,7 @@ class KacoRs485Client:
 
         for i, state in enumerate(due):
             if i:
-                await asyncio.sleep(POLL_GAP_S)
+                await asyncio.sleep(self._poll_gap_s)
             await self._poll_one(state)
 
         return self.states
@@ -89,7 +105,7 @@ class KacoRs485Client:
 
         for j, command in enumerate(CYCLE_COMMANDS):
             if j:
-                await asyncio.sleep(POLL_GAP_S)
+                await asyncio.sleep(self._poll_gap_s)
             reply = await self._bus.request(state.address, command)
             if not reply.responded:
                 continue
@@ -119,7 +135,7 @@ class KacoRs485Client:
         three dark inverters at 2.5 s of timeout per command would otherwise
         consume 15 s of every cycle all night.
 
-        Worst-case morning wake-up latency is therefore SLEEP_RETRY_S — one
+        Worst-case morning wake-up latency is therefore `sleep_retry_s` — one
         minute of a sunrise, which is not worth optimising. Note this is a
         per-inverter timer, not a global one, so the sleeping units stay spread
         across cycles instead of all probing in the same one.
@@ -128,4 +144,4 @@ class KacoRs485Client:
             return True  # never polled — always establish a baseline
         if not state.asleep:
             return True
-        return (now - state.last_polled) >= SLEEP_RETRY_S
+        return (now - state.last_polled) >= self._sleep_retry_s

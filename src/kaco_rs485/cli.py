@@ -18,9 +18,9 @@ adapter on a live bus:
 
 `--url` accepts anything serialx understands:
 
-    /dev/tty.usbserial-0001
-    esphome://atoms3-lite-rs485-f601cc.local:6053/?port_name=RS-485
-    socket://host:port
+    /dev/ttyUSB0
+    esphome://<host>:6053/?port_name=RS-485
+    socket://<host>:<port>
 """
 
 from __future__ import annotations
@@ -29,9 +29,11 @@ import argparse
 import asyncio
 import contextlib
 import datetime as dt
+import json
 import sys
 from pathlib import Path
 
+from . import framing
 from .client import CYCLE_COMMANDS, KacoRs485Client
 from .discovery import ALL_ADDRESSES, scan
 from .framing import trim_leading_junk
@@ -82,10 +84,13 @@ def describe(command: str, raw: bytes) -> str:
             )
         if command == "3":
             t = parse_cmd3(raw)
-            # kWh on xi units, Wh on the blueplanet — see protocol.TotalYield.
+            # D4's unit is series-dependent — kWh on xi units, Wh on the
+            # blueplanet — and nothing in the frame says which. Print it
+            # unlabelled rather than asserting a unit we cannot know here.
             return (
                 f"peak={t.daily_peak_w}W daily={t.daily_yield_wh}Wh "
-                f"total={t.total_yield_raw}kWh uptime={t.total_uptime}"
+                f"total={t.total_yield_raw} (kWh on xi, Wh on blueplanet) "
+                f"uptime={t.total_uptime}"
             )
         if command == "8":
             return parse_cmd8(raw).raw_text
@@ -100,17 +105,25 @@ def diagnose_silence(seen_any_bytes: bool) -> str:
     """The bring-up checklist, printed when nothing answers."""
     if seen_any_bytes:
         return (
-            "Bytes arrived but nothing framed cleanly. Most likely: wrong baud rate,\n"
-            "or two masters transmitting at once — check the old ESP32-S3 node is\n"
-            "powered down before blaming the wiring."
+            "Bytes arrived but nothing framed cleanly. In order of likelihood:\n"
+            "  1. Wrong baud rate. KACO units use 9600 8N1 unless reconfigured.\n"
+            "  2. Two masters transmitting at once. A datalogger or a second\n"
+            "     polling device on the same bus will corrupt both sides'\n"
+            "     traffic; disconnect it before blaming the wiring.\n"
+            "  3. Electrical noise — check shield grounding and cable runs."
         )
     return (
         "No bytes at all. In order of likelihood:\n"
-        "  1. A/B swapped — the single most common RS485 fault. Swap them and retry.\n"
-        "  2. The old ESP32-S3 node is still driving the bus.\n"
-        "  3. Not actually connected to the bus (check the SolarLog RS485/422 terminal).\n"
-        "  4. Missing termination — try 120 ohm across A/B; the ATOMIC base has none.\n"
-        "  5. Inverters are asleep (no sun). They stop answering entirely at night."
+        "  1. A/B swapped. The single most common RS485 fault, and harmless\n"
+        "     to test: swap the two lines and retry.\n"
+        "  2. Another master owns the bus and the inverters are answering it\n"
+        "     instead. Disconnect any datalogger or second polling device.\n"
+        "  3. Not actually on the bus — check the terminal block and that the\n"
+        "     adapter shares a ground reference with the inverters.\n"
+        "  4. Missing termination. Try 120 ohm across A/B; many small adapters\n"
+        "     have no termination resistor fitted.\n"
+        "  5. The inverters are asleep. xi units stop answering entirely when\n"
+        "     the sun is down, so a night-time silence proves nothing."
     )
 
 
@@ -143,6 +156,7 @@ async def cmd_listen(bus: AsyncBus, args: argparse.Namespace) -> int:
 
 async def cmd_sweep(bus: AsyncBus, args: argparse.Namespace) -> int:
     log = _open_log(args)
+    records: list[dict] = []
     responded: set[int] = set()
     saw_bytes = False
 
@@ -156,16 +170,80 @@ async def cmd_sweep(bus: AsyncBus, args: argparse.Namespace) -> int:
 
             saw_bytes = saw_bytes or bool(reply.raw)
             _report(reply, address, command, label, log, verbose=args.verbose)
+            records.append(_record(reply, address, command))
             if reply.responded:
                 responded.add(address)
 
     print(f"\n[+] {len(responded)} address(es) responded: {sorted(responded)}")
     if not responded:
         print("\n" + diagnose_silence(seen_any_bytes=saw_bytes))
+
+    _report_timings(records)
+
     if log:
-        print(f"[+] Raw log: {log.name}")
+        json_path = Path(log.name).with_suffix(".json")
+        json_path.write_text(json.dumps(records, indent=1))
+        print(f"[+] Raw log:  {log.name}")
+        print(f"[+] Records:  {json_path}")
         log.close()
     return 0 if responded else 1
+
+
+def _record(reply: Reply, address: int, command: str) -> dict:
+    """A capture entry, including the raw bytes and the arrival timing.
+
+    `rx_hex` is deliberately included so a session can be replayed through the
+    parsers offline, and `arrivals` so the timeout constants can be checked
+    against measurement rather than taken on trust.
+    """
+    return {
+        "address": address,
+        "command": command,
+        "responded": reply.responded,
+        "bytes": len(reply.raw),
+        "elapsed_ms": round(reply.elapsed_ms, 1),
+        "first_byte_ms": (
+            round(reply.first_byte_ms, 1) if reply.first_byte_ms is not None else None
+        ),
+        "max_gap_ms": (round(reply.max_gap_ms, 1) if reply.max_gap_ms is not None else None),
+        "arrivals": [[round(at, 1), n] for at, n in reply.arrivals],
+        "rx_hex": reply.raw.hex(),
+        "decoded": describe(command, reply.raw) if reply.responded else None,
+    }
+
+
+def _report_timings(records: list[dict]) -> None:
+    """Compare what actually happened against the configured timeouts.
+
+    The constants in `framing` came from a small number of captures on one
+    installation. This is how you find out whether they hold on yours.
+    """
+    starts = [r["first_byte_ms"] for r in records if r["first_byte_ms"] is not None]
+    gaps = [r["max_gap_ms"] for r in records if r["max_gap_ms"] is not None]
+    if not starts:
+        return
+
+    print("\n[+] Measured timing vs. configured limits:")
+    print(
+        f"    reply start:  min {min(starts):6.0f}  max {max(starts):6.0f} ms"
+        f"   (start_timeout_s = {framing.REPLY_START_TIMEOUT_S * 1000:.0f} ms)"
+    )
+    if gaps:
+        print(
+            f"    mid-frame gap: min {min(gaps):6.0f}  max {max(gaps):6.0f} ms"
+            f"   (gap_s = {framing.REPLY_GAP_S * 1000:.0f} ms)"
+        )
+    else:
+        print("    mid-frame gap: never observed (every reply arrived in one chunk)")
+
+    headroom = framing.REPLY_START_TIMEOUT_S * 1000 - max(starts)
+    if headroom < 500:
+        print(
+            f"\n[!] Only {headroom:.0f} ms of headroom on the start timeout. "
+            "Raise start_timeout_s."
+        )
+    if gaps and max(gaps) > framing.REPLY_GAP_S * 1000 * 0.7:
+        print("\n[!] Mid-frame gaps are close to gap_s — frames risk being cut short.")
 
 
 async def cmd_scan(bus: AsyncBus, args: argparse.Namespace) -> int:

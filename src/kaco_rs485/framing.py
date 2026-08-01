@@ -23,6 +23,10 @@ the rules (all from on-site captures, 2026-04 and 2026-07):
 
 from __future__ import annotations
 
+# Both timeouts below were measured against Powador 6400xi and 8000xi units.
+# They are defaults, not protocol constants: a different series, a long cable
+# run, or a slower proxy may need more. `AsyncBus` takes overrides.
+
 # No bytes at all within this window means the inverter is genuinely not
 # answering. Sized for the observed 1-2 s reply latency, not for the wire.
 REPLY_START_TIMEOUT_S = 2.5

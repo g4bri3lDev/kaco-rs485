@@ -50,7 +50,7 @@ once — RS485 is a shared medium and interleaved requests garble each other.
 
 ## Bringing up a bus
 
-Three CLI modes, in the order you actually need them:
+Four CLI modes, in the order you actually need them:
 
 ```bash
 # 1. Is anything there, and are A/B the right way round?

@@ -77,14 +77,24 @@ async def scan(
     Paced by `poll_gap_s` for the same reason polling is: transmitting while a
     straggler reply is still on the wire garbles the next request. A scan is
     especially exposed to this because it walks addresses back to back.
+
+    The gap is only paid **after an address that actually replied**, which is
+    what makes a full 32-address scan tolerable. The hazard the gap defends
+    against is a straggler still arriving from the previous inverter; if
+    nothing answered, there is no straggler and nothing to wait for. A silent
+    address costs only its reply timeout, so a mostly-empty bus scans in a
+    fraction of the time an unconditional gap would need.
     """
     targets = list(addresses)
     result = ScanResult()
+    previous_replied = False
 
     for index, address in enumerate(targets, start=1):
-        if index > 1:
+        if previous_replied:
             await asyncio.sleep(poll_gap_s)
+
         reply = await bus.request(address, "0")
+        previous_replied = reply.responded
 
         if reply.responded:
             result.saw_any_bytes = True

@@ -80,11 +80,13 @@ async def test_occupied_but_unparseable_addresses_are_still_reported(garbled: by
     assert [d.address for d in result.found] == [4]
 
 
-async def test_scan_paces_itself(monkeypatch: pytest.MonkeyPatch) -> None:
-    """A scan walks addresses back to back, so it needs the settle gap most.
+async def test_scan_pauses_only_after_a_reply(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The settle gap guards against a straggler from the previous inverter.
 
-    Regression guard: an unpaced scan transmits while the previous inverter's
-    reply is still on the wire, and replies start going missing at random.
+    A silent address produces no straggler, so waiting after one is pure cost
+    — and it is the difference between a 32-address scan taking two minutes
+    and taking a few seconds. Addresses 2 and 4 answer here, so exactly two
+    gaps should be paid.
     """
     from kaco_rs485 import discovery
 
@@ -94,7 +96,21 @@ async def test_scan_paces_itself(monkeypatch: pytest.MonkeyPatch) -> None:
         gaps.append(seconds)
 
     monkeypatch.setattr(discovery.asyncio, "sleep", recording_sleep)
-    await scan(ScriptedBus({}), range(1, 6))  # type: ignore[arg-type]
+    await scan(ScriptedBus({2: CMD0_FRAME, 4: CMD0_FRAME}), range(1, 6))  # type: ignore[arg-type]
 
-    assert len(gaps) == 4, "one gap between each of the five probes"
+    assert len(gaps) == 2, "one gap after each replying address"
     assert all(g >= discovery.POLL_GAP_S for g in gaps)
+
+
+async def test_scan_of_a_silent_bus_pays_no_gaps(monkeypatch: pytest.MonkeyPatch) -> None:
+    from kaco_rs485 import discovery
+
+    gaps: list[float] = []
+
+    async def recording_sleep(seconds: float) -> None:
+        gaps.append(seconds)
+
+    monkeypatch.setattr(discovery.asyncio, "sleep", recording_sleep)
+    await scan(ScriptedBus({}), range(1, 33))  # type: ignore[arg-type]
+
+    assert gaps == []

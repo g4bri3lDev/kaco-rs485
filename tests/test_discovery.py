@@ -30,13 +30,13 @@ class ScriptedBus:
 
 async def test_scan_probes_every_address_once() -> None:
     bus = ScriptedBus({})
-    await scan(bus, range(1, 6))  # type: ignore[arg-type]
+    await scan(bus, range(1, 6), poll_gap_s=0)  # type: ignore[arg-type]
     assert bus.probed == [1, 2, 3, 4, 5]
 
 
 async def test_scan_identifies_inverter_type() -> None:
     bus = ScriptedBus({2: CMD0_FRAME})
-    result = await scan(bus, range(1, 6))  # type: ignore[arg-type]
+    result = await scan(bus, range(1, 6), poll_gap_s=0)  # type: ignore[arg-type]
 
     assert [d.address for d in result.supported] == [2]
     assert result.supported[0].inverter_type == "6400xi"
@@ -49,7 +49,7 @@ async def test_generic_protocol_devices_are_reported_not_skipped() -> None:
     not exist.
     """
     bus = ScriptedBus({3: GENERIC_FRAME})
-    result = await scan(bus, range(1, 6))  # type: ignore[arg-type]
+    result = await scan(bus, range(1, 6), poll_gap_s=0)  # type: ignore[arg-type]
 
     assert not result.supported
     assert [d.address for d in result.unsupported] == [3]
@@ -57,22 +57,44 @@ async def test_generic_protocol_devices_are_reported_not_skipped() -> None:
 
 async def test_silent_bus_is_distinguishable_from_a_bus_with_no_inverters() -> None:
     """At night everything goes quiet, which must not read as 'wiring fault'."""
-    silent = await scan(ScriptedBus({}), range(1, 6))  # type: ignore[arg-type]
+    silent = await scan(ScriptedBus({}), range(1, 6), poll_gap_s=0)  # type: ignore[arg-type]
     assert not silent.found
     assert not silent.saw_any_bytes
 
-    answering = await scan(ScriptedBus({1: CMD0_FRAME}), range(1, 6))  # type: ignore[arg-type]
+    answering = await scan(ScriptedBus({1: CMD0_FRAME}), range(1, 6), poll_gap_s=0)  # type: ignore[arg-type]
     assert answering.saw_any_bytes
 
 
 async def test_progress_is_reported_for_every_address() -> None:
     seen: list[tuple[int, int]] = []
-    await scan(ScriptedBus({}), range(1, 6), on_progress=lambda d, t: seen.append((d, t)))  # type: ignore[arg-type]
+    await scan(
+        ScriptedBus({}), range(1, 6), on_progress=lambda d, t: seen.append((d, t)), poll_gap_s=0
+    )  # type: ignore[arg-type]
     assert seen == [(1, 5), (2, 5), (3, 5), (4, 5), (5, 5)]
 
 
 @pytest.mark.parametrize("garbled", [b"\n*01" + b"\x00" * 60, b"\n*99" + b"\xff" * 60])
 async def test_occupied_but_unparseable_addresses_are_still_reported(garbled: bytes) -> None:
     """Something answered. The address is taken, even if the frame was junk."""
-    result = await scan(ScriptedBus({4: garbled}), range(1, 6))  # type: ignore[arg-type]
+    result = await scan(ScriptedBus({4: garbled}), range(1, 6), poll_gap_s=0)  # type: ignore[arg-type]
     assert [d.address for d in result.found] == [4]
+
+
+async def test_scan_paces_itself(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A scan walks addresses back to back, so it needs the settle gap most.
+
+    Regression guard: an unpaced scan transmits while the previous inverter's
+    reply is still on the wire, and replies start going missing at random.
+    """
+    from kaco_rs485 import discovery
+
+    gaps: list[float] = []
+
+    async def recording_sleep(seconds: float) -> None:
+        gaps.append(seconds)
+
+    monkeypatch.setattr(discovery.asyncio, "sleep", recording_sleep)
+    await scan(ScriptedBus({}), range(1, 6))  # type: ignore[arg-type]
+
+    assert len(gaps) == 4, "one gap between each of the five probes"
+    assert all(g >= discovery.POLL_GAP_S for g in gaps)

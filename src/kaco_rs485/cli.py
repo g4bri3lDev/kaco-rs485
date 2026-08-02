@@ -34,7 +34,7 @@ import sys
 from pathlib import Path
 
 from . import framing
-from .client import CYCLE_COMMANDS, KacoRs485Client
+from .client import CYCLE_COMMANDS, POLL_GAP_S, KacoRs485Client
 from .discovery import ALL_ADDRESSES, scan
 from .framing import trim_leading_junk
 from .protocol import (
@@ -173,8 +173,16 @@ async def cmd_sweep(bus: AsyncBus, args: argparse.Namespace) -> int:
     responded: set[int] = set()
     saw_bytes = False
 
+    first = True
     for address in args.addresses or ALL_ADDRESSES:
         for command, label in PROBE_COMMANDS:
+            # Bus-settle gap between every request. Without it a straggler
+            # reply from the previous command is still on the wire when the
+            # next request goes out, and both get corrupted -- which shows up
+            # as replies going missing at random.
+            if not first:
+                await asyncio.sleep(POLL_GAP_S)
+            first = False
             try:
                 reply = await bus.request(address, command)
             except BusError as err:
@@ -308,7 +316,7 @@ async def cmd_poll(bus: AsyncBus, args: argparse.Namespace) -> int:
 
     while True:
         await client.poll_cycle()
-        stamp = dt.datetime.now(tz=dt.UTC).strftime("%H:%M:%S")
+        stamp = dt.datetime.now().astimezone().strftime("%H:%M:%S")
         for address, state in sorted(client.states.items()):
             if state.measured is None:
                 status = "asleep" if state.asleep else f"no reply ({state.consecutive_misses})"
@@ -330,7 +338,7 @@ def _open_log(args: argparse.Namespace):
         return None
     directory = Path(args.log_dir)
     directory.mkdir(parents=True, exist_ok=True)
-    stamp = dt.datetime.now(tz=dt.UTC).strftime("%Y%m%d_%H%M%S")
+    stamp = dt.datetime.now().astimezone().strftime("%Y%m%d_%H%M%S")
     handle = (directory / f"{stamp}.log").open("w")
     handle.write(f"# kaco-rs485 session {stamp}\n# url={args.url}\n")
     return handle

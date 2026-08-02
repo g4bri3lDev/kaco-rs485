@@ -19,9 +19,11 @@ Two things this deliberately reports rather than hides:
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
+from .client import POLL_GAP_S
 from .protocol import ParseError, Protocol, parse_cmd0
 from .transport import AsyncBus
 
@@ -65,16 +67,23 @@ async def scan(
     addresses: range | list[int] = ALL_ADDRESSES,
     *,
     on_progress: Callable[[int, int], None] | None = None,
+    poll_gap_s: float = POLL_GAP_S,
 ) -> ScanResult:
     """Probe each address once with command `0`.
 
     `on_progress(done, total)` is called after every address so a UI can show
     something during what is, worst case, a couple of minutes of timeouts.
+
+    Paced by `poll_gap_s` for the same reason polling is: transmitting while a
+    straggler reply is still on the wire garbles the next request. A scan is
+    especially exposed to this because it walks addresses back to back.
     """
     targets = list(addresses)
     result = ScanResult()
 
     for index, address in enumerate(targets, start=1):
+        if index > 1:
+            await asyncio.sleep(poll_gap_s)
         reply = await bus.request(address, "0")
 
         if reply.responded:

@@ -315,7 +315,22 @@ async def cmd_poll(bus: AsyncBus, args: argparse.Namespace) -> int:
     print(f"[+] Polling {addresses}, commands {list(CYCLE_COMMANDS)}. Ctrl-C to stop.\n")
 
     while True:
-        await client.poll_cycle()
+        try:
+            await client.poll_cycle()
+        except BusError as err:
+            # A networked bus loses its connection routinely -- a wifi blip, an
+            # ESP reboot, the host suspending. Reconnect rather than abandoning
+            # a soak that may have been running for hours.
+            stamp = dt.datetime.now().astimezone().strftime("%H:%M:%S")
+            print(f"  {stamp}  bus error: {err}\n  {stamp}  reconnecting...")
+            await bus.close()
+            try:
+                await bus.open()
+            except BusError as reopen_err:
+                print(f"  {stamp}  reconnect failed: {reopen_err}")
+            await asyncio.sleep(args.interval)
+            continue
+
         stamp = dt.datetime.now().astimezone().strftime("%H:%M:%S")
         for address, state in sorted(client.states.items()):
             if state.measured is None:

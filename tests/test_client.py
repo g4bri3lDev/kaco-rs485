@@ -242,3 +242,46 @@ async def test_persistent_corruption_keeps_the_inverter_available() -> None:
     assert client.states[1].consecutive_misses == 0
     assert client.states[1].available
     assert client.states[1].measured is None
+
+
+# --- connection loss -----------------------------------------------------
+
+
+class ExplodingBus:
+    """Fails the way a dropped ESPHome proxy connection does.
+
+    aioesphomeapi raises APIConnectionError, which is neither OSError nor
+    TimeoutError. Catching only those let it escape the transport and kill a
+    long-running poll outright.
+    """
+
+    class NotAnOSError(Exception):
+        pass
+
+    async def request(self, address: int, command: str) -> Reply:
+        raise self.NotAnOSError("Not connected to proxy!")
+
+
+async def test_connection_loss_surfaces_as_bus_error() -> None:
+    from kaco_rs485.transport import AsyncBus, BusError
+
+    class DeadWriter:
+        def write(self, data: bytes) -> None:
+            raise ExplodingBus.NotAnOSError("Not connected to proxy!")
+
+        async def drain(self) -> None:
+            pass
+
+        def close(self) -> None:
+            pass
+
+    class DeadReader:
+        async def read(self, n: int) -> bytes:
+            return b""
+
+    bus = AsyncBus("esphome://nowhere:6053/?port_name=X")
+    bus._reader = DeadReader()  # type: ignore[assignment]
+    bus._writer = DeadWriter()  # type: ignore[assignment]
+
+    with pytest.raises(BusError):
+        await bus.request(1, "0")

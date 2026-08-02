@@ -20,6 +20,7 @@ hardware. From here this is an ordinary half-duplex serial port.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import time
 from dataclasses import dataclass, field
 from types import TracebackType
@@ -62,8 +63,9 @@ class Reply:
     def max_gap_ms(self) -> float | None:
         """Longest silence *inside* the reply. Compare against `gap_s`.
 
-        On xi units this is expected to exceed 250 ms, from the documented
-        pause between the checksum byte and the trailing type string.
+        Measured at 1-73 ms across 208 chunks on Powador 6400xi/8000xi units
+        read through an ESPHome proxy. Earlier notes claimed a >250 ms pause
+        before the trailing type string; that was not reproduced.
         """
         if len(self.arrivals) < 2:
             return None
@@ -71,7 +73,19 @@ class Reply:
 
 
 class BusError(Exception):
-    """The bus could not be opened or used."""
+    """The bus could not be opened or used.
+
+    Every failure from the layer below surfaces as this, deliberately. The
+    transport spans several stacks — a local tty, a TCP socket, or an ESPHome
+    native-API connection — and each raises its own exception types.
+    `aioesphomeapi.APIConnectionError` in particular is neither an `OSError`
+    nor a `TimeoutError`, so catching only those let a dropped proxy
+    connection escape as an unhandled traceback and kill a long-running poll.
+
+    Callers must be able to write `except BusError` and be done. Losing a
+    connection is a normal event for a networked bus — a wifi blip, an ESP
+    reboot, a host suspending — and must be recoverable, not fatal.
+    """
 
 
 class AsyncBus:
@@ -109,18 +123,14 @@ class AsyncBus:
             kwargs["key"] = self._key
         try:
             self._reader, self._writer = await serialx.open_serial_connection(**kwargs)  # type: ignore[arg-type]
-        # serialx surfaces failures as plain OSError/TimeoutError rather than a
-        # pyserial SerialException — see the HA pyserial->serialx migration note.
-        except (OSError, TimeoutError) as err:
+        except Exception as err:
             raise BusError(f"could not open {self._url}: {err}") from err
 
     async def close(self) -> None:
         if self._writer is not None:
             self._writer.close()
-            try:
+            with contextlib.suppress(Exception):
                 await self._writer.wait_closed()
-            except (OSError, TimeoutError):
-                pass
         self._reader = None
         self._writer = None
 
@@ -153,7 +163,7 @@ class AsyncBus:
         try:
             self._writer.write(frame)
             await self._writer.drain()
-        except (OSError, TimeoutError) as err:
+        except Exception as err:
             raise BusError(f"write failed: {err}") from err
 
         t0 = time.monotonic()
@@ -177,7 +187,7 @@ class AsyncBus:
             return await asyncio.wait_for(self._reader.read(256), timeout)
         except TimeoutError:
             return b""
-        except OSError as err:
+        except Exception as err:
             raise BusError(f"read failed: {err}") from err
 
     async def _read_reply(self, command: str, t0: float) -> tuple[bytes, list[tuple[float, int]]]:
@@ -185,14 +195,15 @@ class AsyncBus:
         buf = b""
         arrivals: list[tuple[float, int]] = []
         while True:
-            # First byte gets the long window (replies start 1-2 s late);
-            # subsequent bytes only need to clear the mid-frame pause.
+            # The first byte gets the long window; subsequent bytes only need
+            # to clear the inter-byte gap. Measured reply start is 44-413 ms,
+            # so the 2.5 s default is roughly 6x margin.
             timeout = self._start_timeout_s if not buf else self._gap_s
             try:
                 chunk = await asyncio.wait_for(self._reader.read(256), timeout)
             except TimeoutError:
                 break
-            except OSError as err:
+            except Exception as err:
                 raise BusError(f"read failed: {err}") from err
 
             if not chunk:  # port closed underneath us
@@ -217,7 +228,7 @@ class AsyncBus:
                 chunk = await asyncio.wait_for(self._reader.read(256), 0.01)
             except TimeoutError:
                 return
-            except OSError:
-                return
+            except Exception as err:
+                raise BusError(f"read failed while draining: {err}") from err
             if not chunk:
                 return

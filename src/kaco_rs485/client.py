@@ -98,8 +98,7 @@ class KacoRs485Client:
         self._max_attempts = max_attempts
         self._retry_delay_s = retry_delay_s
         self.states: dict[int, InverterState] = {
-            addr: InverterState(address=addr, sleep_after=sleep_after_misses)
-            for addr in addresses
+            addr: InverterState(address=addr, sleep_after=sleep_after_misses) for addr in addresses
         }
 
     async def poll_cycle(self) -> dict[int, InverterState]:
@@ -125,11 +124,12 @@ class KacoRs485Client:
             responded, parsed = await self._request_with_retry(state.address, command)
             answered = answered or responded
 
-            if parsed is not None:
-                if command == "0":
-                    state.measured = parsed
-                elif command == "3":
-                    state.totals = parsed
+            # The command decides which shape comes back; narrow so that is
+            # checked rather than assumed.
+            if isinstance(parsed, MeasuredValues):
+                state.measured = parsed
+            elif isinstance(parsed, TotalYield):
+                state.totals = parsed
 
             # A sleeping inverter that answers its probe stops being asleep
             # partway through the cycle, so don't wait for the cycle to end.

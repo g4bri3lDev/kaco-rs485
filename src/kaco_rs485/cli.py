@@ -260,8 +260,7 @@ def _report_timings(records: list[dict]) -> None:
     headroom = framing.REPLY_START_TIMEOUT_S * 1000 - max(starts)
     if headroom < 500:
         print(
-            f"\n[!] Only {headroom:.0f} ms of headroom on the start timeout. "
-            "Raise start_timeout_s."
+            f"\n[!] Only {headroom:.0f} ms of headroom on the start timeout. Raise start_timeout_s."
         )
     if gaps and max(gaps) > framing.REPLY_GAP_S * 1000 * 0.7:
         print("\n[!] Mid-frame gaps are close to gap_s — frames risk being cut short.")
@@ -359,9 +358,7 @@ def _open_log(args: argparse.Namespace):
     return handle
 
 
-def _report(
-    reply: Reply, address: int, command: str, label: str, log, *, verbose: bool
-) -> None:
+def _report(reply: Reply, address: int, command: str, label: str, log, *, verbose: bool) -> None:
     if not reply.responded:
         print(f"  addr={address:02d} cmd={command!r} ({label})  no reply")
         if log:

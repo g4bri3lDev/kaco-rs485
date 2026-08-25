@@ -21,12 +21,13 @@ from enum import Enum
 
 # --- Series detection ----------------------------------------------------
 
+
 class Protocol(Enum):
     """Identified by the command byte echoed in the reply (Section 1.4, Table 3)."""
 
-    KACO_STANDARD_00 = "0"   # series "00"/"02"/"XP-old" — the xi units we have
+    KACO_STANDARD_00 = "0"  # series "00"/"02"/"XP-old" — the xi units we have
     KACO_STANDARD_000XI = "4"  # series "000xi" — large park inverters
-    GENERIC_CRC16 = "n"      # TL1/TL3/TR3/XP — different frame, CRC16
+    GENERIC_CRC16 = "n"  # TL1/TL3/TR3/XP — different frame, CRC16
 
     @classmethod
     def from_reply(cls, raw: bytes) -> Protocol | None:
@@ -46,6 +47,7 @@ class Protocol(Enum):
 
 # --- Request frames ------------------------------------------------------
 
+
 def build_request(address: int, command: str) -> bytes:
     """`#<addr><cmd><CR>` — used by every command in the standard protocol."""
     if not 1 <= address <= 32:
@@ -56,6 +58,7 @@ def build_request(address: int, command: str) -> bytes:
 
 
 # --- Checksum (series "00") ---------------------------------------------
+
 
 def kaco_sum_checksum(payload: bytes) -> int:
     """Series "00" checksum: 1-byte sum of ASCII values mod 256.
@@ -112,11 +115,13 @@ def verify_checksum(raw: bytes) -> tuple[bool, int, int]:
 
 # --- Command `0` reply parsing ------------------------------------------
 
+
 @dataclass
 class MeasuredValues:
     """Decoded `#<adr>0<CR>` reply for series "00" inverters."""
+
     address: int
-    status: int           # raw status code; meaning is in the inverter manual
+    status: int  # raw status code; meaning is in the inverter manual
     dc_voltage_v: float
     dc_current_a: float
     dc_power_w: int
@@ -125,7 +130,7 @@ class MeasuredValues:
     ac_power_w: int
     temperature_c: int
     daily_yield_wh: int
-    inverter_type: str    # e.g. "6400xi"
+    inverter_type: str  # e.g. "6400xi"
     checksum_ok: bool
 
 
@@ -188,6 +193,7 @@ def parse_cmd0(raw: bytes) -> MeasuredValues:
 
 # --- Command `3` reply parsing (total yield + hours) ---------------------
 
+
 @dataclass
 class TotalYield:
     """Decoded `#<adr>3<CR>` reply.
@@ -200,14 +206,15 @@ class TotalYield:
       blueplanet (Generic Protocol). We expose `total_yield_raw` and let the
       caller scale.
     """
-    address: int | None             # None when no header is present (xi quirk)
-    daily_peak_w: int               # D1
-    daily_yield_wh: int             # D2 — Wh on every series we've seen
-    short_time_counter: int         # D3 — short-window accumulator, raw
-    total_yield_raw: int            # D4 — kWh on xi, Wh on blueplanet (caller scales)
-    daily_uptime: str               # D5 — `hhhhhh:mm`
-    short_time_uptime: str          # D6
-    total_uptime: str               # D7
+
+    address: int | None  # None when no header is present (xi quirk)
+    daily_peak_w: int  # D1
+    daily_yield_wh: int  # D2 — Wh on every series we've seen
+    short_time_counter: int  # D3 — short-window accumulator, raw
+    total_yield_raw: int  # D4 — kWh on xi, Wh on blueplanet (caller scales)
+    daily_uptime: str  # D5 — `hhhhhh:mm`
+    short_time_uptime: str  # D6
+    total_uptime: str  # D7
 
 
 def parse_cmd3(raw: bytes) -> TotalYield:
@@ -260,6 +267,7 @@ def parse_cmd3(raw: bytes) -> TotalYield:
 
 # --- Command `8` reply parsing (firmware) --------------------------------
 
+
 @dataclass
 class Firmware:
     """Decoded `#<adr>8<CR>` reply.
@@ -268,8 +276,9 @@ class Firmware:
     - xi units: `*<adr>8 K222.36DE 6817` — single vendor version + 4-char hex
     - blueplanet: `*<adr>8 ARM V6.53 D6A5 Config V6.3124 2F4F DSP V4.08 6BA0`
     """
+
     address: int
-    raw_text: str   # everything after `*<adr>8 `
+    raw_text: str  # everything after `*<adr>8 `
 
 
 def parse_cmd8(raw: bytes) -> Firmware:
@@ -284,6 +293,7 @@ def parse_cmd8(raw: bytes) -> Firmware:
 
 
 # --- Command `9` reply parsing (inverter type) ---------------------------
+
 
 def parse_cmd9(raw: bytes) -> str:
     """Return the inverter type string from a `#<adr>9<CR>` reply.
@@ -302,6 +312,7 @@ def parse_cmd9(raw: bytes) -> str:
 
 
 # --- Command `s` reply parsing (serial number) ---------------------------
+
 
 def parse_cmds(raw: bytes) -> str:
     """Return the serial number from a `#<adr>s<CR>` reply.

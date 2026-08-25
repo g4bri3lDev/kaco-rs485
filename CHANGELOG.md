@@ -1,0 +1,26 @@
+# Changelog
+
+## 0.1.0 (2026-08-25)
+
+
+### Features
+
+* accept third-party captures as test fixtures ([e7c9ea8](https://github.com/g4bri3lDev/kaco-rs485/commit/e7c9ea8aceb3eff0bbfd2ed3df35b0fe90713785))
+* bus discovery instead of hardcoded addresses ([95ac5d1](https://github.com/g4bri3lDev/kaco-rs485/commit/95ac5d1f288641ee3101313662decac1c4b5bdc4))
+* fold in findings from the vendor firmware analysis ([e1c782a](https://github.com/g4bri3lDev/kaco-rs485/commit/e1c782ac9091267a160641327a5b214e4cc12140))
+* KACO xi RS485 library with URL-addressed transport ([ab6e9f5](https://github.com/g4bri3lDev/kaco-rs485/commit/ab6e9f5d3fa6c7705e93b349c19390742a1ca27f))
+* status code table with the two field-observed codes ([7c5efe4](https://github.com/g4bri3lDev/kaco-rs485/commit/7c5efe4d106f66f96eb2cd1b5dffcdb1563b736b))
+
+
+### Bug fixes
+
+* an empty listen is not evidence of a fault ([b7a5112](https://github.com/g4bri3lDev/kaco-rs485/commit/b7a51124939e692e06d10df4ddad2cf04afa543e))
+* connection loss must not kill a long-running poll ([54ff92f](https://github.com/g4bri3lDev/kaco-rs485/commit/54ff92f9769a53942e26ea993bc23a390eb89bcc))
+* narrow two types the checker could not follow ([7706eef](https://github.com/g4bri3lDev/kaco-rs485/commit/7706eef5b993a86e433719fe09e430d675a279de))
+* pace scan and sweep, they were polling back to back ([eb6bc7f](https://github.com/g4bri3lDev/kaco-rs485/commit/eb6bc7f50e579f16e9f021d51a7d5c28f871cb48))
+* remove installation-specific assumptions; instrument timings ([1296848](https://github.com/g4bri3lDev/kaco-rs485/commit/129684876d49d9700edc5dca1177095b248b5bff))
+
+
+### Performance
+
+* only pay the bus-settle gap after an address replies ([d2b008e](https://github.com/g4bri3lDev/kaco-rs485/commit/d2b008ee81765e976a2ee5f2472d368d140fc239))

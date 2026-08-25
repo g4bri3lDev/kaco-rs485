@@ -3,7 +3,7 @@
   "packages": {
     ".": {
       "release-type": "python",
-      "package-name": "kaco-rs485",
+      "package-name": "kaco-serial",
       "changelog-path": "CHANGELOG.md",
       "extra-files": ["src/kaco_rs485/__init__.py"],
       "include-component-in-tag": false,

@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "kaco-rs485"
+name = "kaco-serial"
 dynamic = ["version"]
 description = "Read KACO Powador xi-series inverters over RS485, locally or via an ESPHome serial proxy."
 readme = "README.md"

@@ -11,8 +11,8 @@ different hardware generation, same fleet.
 ## Install
 
 ```bash
-uv add kaco-rs485          # library
-uv add 'kaco-rs485[cli]'   # + the diagnostic CLI and ESPHome transport
+uv add kaco-serial         # library
+uv add 'kaco-serial[cli]'  # + the diagnostic CLI and ESPHome transport
 ```
 
 ## The bus is addressed by URL

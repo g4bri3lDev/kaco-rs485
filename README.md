@@ -31,6 +31,17 @@ The `esphome-hass` scheme is registered by Home Assistant and resolves the
 ESPHome integration's already-authenticated client — which is why the Home
 Assistant integration built on this library stores no host and no API key.
 
+If you have no RS485 port on the network yet, the quickest one is the
+ready-made ESPHome project for the **M5Stack AtomS3 Lite with an ATOMIC RS485
+Base**, which installs [from the browser](https://esphome.io/projects/?type=serial).
+Other hardware is covered by the
+[serial-proxies repository](https://github.com/esphome/serial-proxies) and the
+[`serial_proxy` component](https://esphome.io/components/serial_proxy/).
+
+An ESPHome API encryption key is passed separately — `--key` on the CLI, or the
+`key` argument to `AsyncBus` — and never as part of the URL, so it needs no
+escaping.
+
 ## Library
 
 ```python

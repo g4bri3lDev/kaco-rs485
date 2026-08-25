@@ -1,5 +1,7 @@
 """Read KACO Powador xi-series inverters over RS485."""
 
+__version__ = "0.1.0"  # x-release-please-version
+
 from .client import InverterState, KacoRs485Client
 from .protocol import (
     Firmware,

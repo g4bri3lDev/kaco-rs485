@@ -289,7 +289,6 @@ wheels = [
 
 [[package]]
 name = "kaco-rs485"
-version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "serialx" },

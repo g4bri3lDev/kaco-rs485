@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0](https://github.com/g4bri3lDev/kaco-rs485/compare/v0.2.0...v0.3.0) (2026-08-30)
+
+
+### Features
+
+* capture firmware during discovery ([#7](https://github.com/g4bri3lDev/kaco-rs485/issues/7)) ([c66ffc8](https://github.com/g4bri3lDev/kaco-rs485/commit/c66ffc84f90b4bacf7ed9e01dfa8113774d983d5))
+
+
+### Documentation
+
+* reconcile framing's timing claims with what was measured ([#6](https://github.com/g4bri3lDev/kaco-rs485/issues/6)) ([57f2a8a](https://github.com/g4bri3lDev/kaco-rs485/commit/57f2a8a2efc8af7695c3eb75967fc6d298dfcc43))
+* record what the units actually do at dusk ([#4](https://github.com/g4bri3lDev/kaco-rs485/issues/4)) ([1b1df6a](https://github.com/g4bri3lDev/kaco-rs485/commit/1b1df6ac090b03b5153c6095206503d426ea9c3a))
+
 ## [0.2.0](https://github.com/g4bri3lDev/kaco-rs485/compare/v0.1.0...v0.2.0) (2026-08-30)
 
 

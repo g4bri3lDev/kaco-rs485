@@ -7,9 +7,13 @@ import pytest
 from kaco_rs485.discovery import scan
 from kaco_rs485.transport import Reply
 
-from .conftest import ALL_CAPTURES, CMD0_CAPTURES
+from .conftest import ALL_CAPTURES, CMD0_CAPTURES, CMD8_XI_CAPTURES
 
 CMD0_FRAME = CMD0_CAPTURES[0].raw
+CMD8_FRAME = CMD8_XI_CAPTURES[0].raw
+# What `parse_cmd8` pulls out of CMD8_FRAME, e.g. "K222.36DE 6817".
+CMD8_TEXT = CMD8_FRAME[5:].split(b"\r", 1)[0].strip().decode()
+
 # A blueplanet / TL-series reply: same request, CRC16 Generic Protocol answer.
 GENERIC_FRAME = next(
     (c.raw for c in ALL_CAPTURES if c.raw[4:5] == b"n"),
@@ -18,13 +22,25 @@ GENERIC_FRAME = next(
 
 
 class ScriptedBus:
-    def __init__(self, replies: dict[int, bytes]) -> None:
+    """Answers cmd `0` from `replies`; every supported unit answers cmd `8`.
+
+    `firmware` overrides that per address — pass `b""` for a unit that stays
+    silent on command `8`.
+    """
+
+    def __init__(self, replies: dict[int, bytes], firmware: dict[int, bytes] | None = None) -> None:
         self.replies = replies
+        self.firmware = firmware or {}
         self.probed: list[int] = []
+        self.requests: list[tuple[int, str]] = []
 
     async def request(self, address: int, command: str) -> Reply:
-        self.probed.append(address)
-        raw = self.replies.get(address, b"")
+        self.requests.append((address, command))
+        if command == "8":
+            raw = self.firmware.get(address, CMD8_FRAME)
+        else:
+            self.probed.append(address)
+            raw = self.replies.get(address, b"")
         return Reply(request=b"", raw=raw, elapsed_ms=2000.0)
 
 
@@ -85,8 +101,8 @@ async def test_scan_pauses_only_after_a_reply(monkeypatch: pytest.MonkeyPatch) -
 
     A silent address produces no straggler, so waiting after one is pure cost
     — and it is the difference between a 32-address scan taking two minutes
-    and taking a few seconds. Addresses 2 and 4 answer here, so exactly two
-    gaps should be paid.
+    and taking a few seconds. Addresses 2 and 4 answer here; the other three
+    must cost nothing.
     """
     from kaco_rs485 import discovery
 
@@ -98,7 +114,9 @@ async def test_scan_pauses_only_after_a_reply(monkeypatch: pytest.MonkeyPatch) -
     monkeypatch.setattr(discovery.asyncio, "sleep", recording_sleep)
     await scan(ScriptedBus({2: CMD0_FRAME, 4: CMD0_FRAME}), range(1, 6))  # type: ignore[arg-type]
 
-    assert len(gaps) == 2, "one gap after each replying address"
+    # Two gaps per replying address: one before its firmware read, one before
+    # the next address. Silent addresses still cost nothing.
+    assert len(gaps) == 4, "two gaps for each of the two replying addresses"
     assert all(g >= discovery.POLL_GAP_S for g in gaps)
 
 
@@ -114,3 +132,45 @@ async def test_scan_of_a_silent_bus_pays_no_gaps(monkeypatch: pytest.MonkeyPatch
     await scan(ScriptedBus({}), range(1, 33))  # type: ignore[arg-type]
 
     assert gaps == []
+
+
+# --- firmware captured during discovery ----------------------------------
+
+
+async def test_scan_records_firmware_for_supported_units() -> None:
+    """Static data has to be captured while the inverter is demonstrably awake.
+
+    These units leave the bus at dusk, so a caller that waits until its first
+    poll to ask may never get an answer at all.
+    """
+    bus = ScriptedBus({2: CMD0_FRAME})
+    result = await scan(bus, range(1, 6), poll_gap_s=0)  # type: ignore[arg-type]
+
+    assert result.supported[0].firmware == CMD8_TEXT
+    assert (2, "8") in bus.requests
+
+
+async def test_silent_addresses_are_not_asked_for_firmware() -> None:
+    bus = ScriptedBus({})
+    await scan(bus, range(1, 6), poll_gap_s=0)  # type: ignore[arg-type]
+
+    assert [r for r in bus.requests if r[1] == "8"] == []
+
+
+async def test_generic_protocol_devices_are_not_asked_for_firmware() -> None:
+    """A blueplanet is reported, not read — this library cannot poll it."""
+    bus = ScriptedBus({3: GENERIC_FRAME})
+    result = await scan(bus, range(1, 6), poll_gap_s=0)  # type: ignore[arg-type]
+
+    assert result.unsupported[0].address == 3
+    assert [r for r in bus.requests if r[1] == "8"] == []
+
+
+async def test_unreadable_firmware_still_reports_the_inverter() -> None:
+    """A missing version string must never cost us a discovered inverter."""
+    bus = ScriptedBus({2: CMD0_FRAME}, firmware={2: b""})
+    result = await scan(bus, range(1, 6), poll_gap_s=0)  # type: ignore[arg-type]
+
+    assert [d.address for d in result.supported] == [2]
+    assert result.supported[0].inverter_type == "6400xi"
+    assert result.supported[0].firmware == ""

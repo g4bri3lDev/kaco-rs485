@@ -6,9 +6,22 @@ on-site debugging to get right, and those lessons are encoded here:
 - Never poll back-to-back. Transmitting while a straggler reply is still on
   the wire garbles the request for the next inverter — this was observed
   silencing WR2 entirely. Hence POLL_GAP_S between every request.
-- Inverters go dark at night. Polling a dark inverter costs a full
-  REPLY_START_TIMEOUT_S (2.5 s) per command, so a fleet that has gone to sleep
-  otherwise spends all night timing out. Hence the backoff below.
+- Inverters go dark at night, completely. Measured on a 6400xi/8000xi bus
+  (2026-08-30, sunset 19:58 local): output reached 0 W around 19:15, after
+  which the units cycled `Waiting` -> `Constant voltage mode` -> `MPP tracking`
+  for an hour while still answering every poll, then stopped answering between
+  20:13 and 20:19 — one reporting status 2, `Waiting for shutdown`, as its last
+  word. From then until morning they return nothing: a passive listen on the
+  bus hears zero bytes, and every address times out.
+
+  Note they never report status 15, `Night shutdown`, even though the vendor
+  defines it and its own datalogger treats it as a reason to skip polling.
+  These units simply leave the bus, so silence is the only signal available —
+  and it is indistinguishable from a unit that has been disconnected.
+
+  Polling a dark inverter costs a full REPLY_START_TIMEOUT_S (2.5 s) per
+  command, so a fleet that has gone to sleep otherwise spends all night timing
+  out. Hence the backoff below.
 - A sleeping inverter must still be probed occasionally, or the fleet never
   wakes up in the morning.
 """

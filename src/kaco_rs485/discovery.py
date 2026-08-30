@@ -20,12 +20,13 @@ Two things this deliberately reports rather than hides:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import typing
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
-from .client import POLL_GAP_S
-from .protocol import ParseError, Protocol, parse_cmd0
+from .client import POLL_GAP_S, STATIC_COMMAND
+from .protocol import ParseError, Protocol, parse_cmd0, parse_cmd8
 from .transport import Reply
 
 # The KACO standard protocol allows addresses 1-32.
@@ -42,6 +43,15 @@ class Discovered:
 
     supported: bool
     """False for CRC16 Generic Protocol devices — blueplanet and TL/TR units."""
+
+    firmware: str = ""
+    """e.g. "K222.36DE 6817". Empty when the unit did not answer command `8`.
+
+    Read here, during discovery, rather than left to the caller's first poll.
+    Static per-unit data is only obtainable while the inverter is awake, and
+    these units leave the bus entirely at dusk — so anything that wants to
+    record what a device *is* has to capture it at setup or not at all.
+    """
 
 
 @dataclass
@@ -96,6 +106,11 @@ async def scan(
     nothing answered, there is no straggler and nothing to wait for. A silent
     address costs only its reply timeout, so a mostly-empty bus scans in a
     fraction of the time an unconditional gap would need.
+
+    Each supported unit is asked for its firmware afterwards, so an address
+    that answers costs two requests and two gaps rather than one. That is worth
+    it here and nowhere else: discovery is the only moment the caller is
+    guaranteed to be talking to an awake inverter.
     """
     targets = list(addresses)
     result = ScanResult()
@@ -110,12 +125,36 @@ async def scan(
 
         if reply.responded:
             result.saw_any_bytes = True
-            result.found.append(_identify(address, reply.raw))
+            discovered = _identify(address, reply.raw)
+
+            if discovered.supported:
+                await asyncio.sleep(poll_gap_s)
+                discovered = await _read_firmware(bus, discovered)
+
+            result.found.append(discovered)
 
         if on_progress is not None:
             on_progress(index, len(targets))
 
     return result
+
+
+async def _read_firmware(bus: Requestable, discovered: Discovered) -> Discovered:
+    """Ask a unit that has just answered for its firmware version.
+
+    Only worth one attempt: a device that answered command `0` a moment ago is
+    demonstrably present, so silence here means it does not implement the
+    command rather than that it is absent. Failure leaves `firmware` empty and
+    is never fatal — the scan's job is to find inverters, and a missing version
+    string is cosmetic beside that.
+    """
+    reply = await bus.request(discovered.address, STATIC_COMMAND)
+    if not reply.responded:
+        return discovered
+
+    with contextlib.suppress(ParseError):
+        return replace(discovered, firmware=parse_cmd8(reply.raw).raw_text)
+    return discovered
 
 
 def _identify(address: int, raw: bytes) -> Discovered:

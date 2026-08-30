@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.0](https://github.com/g4bri3lDev/kaco-rs485/compare/v0.1.0...v0.2.0) (2026-08-30)
+
+
+### Features
+
+* read the firmware version once per address ([#3](https://github.com/g4bri3lDev/kaco-rs485/issues/3)) ([cf5ec40](https://github.com/g4bri3lDev/kaco-rs485/commit/cf5ec406301c36d4b82b099422cf7f5779ef7388))
+
+
+### Documentation
+
+* point at the ready-made ESPHome RS485 proxy ([f48978c](https://github.com/g4bri3lDev/kaco-rs485/commit/f48978c0f6626dd665d850ecfc49a53829d962dc))
+
 ## 0.1.0 (2026-08-25)
 
 

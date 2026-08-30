@@ -63,9 +63,8 @@ class Reply:
     def max_gap_ms(self) -> float | None:
         """Longest silence *inside* the reply. Compare against `gap_s`.
 
-        Measured at 1-73 ms across 208 chunks on Powador 6400xi/8000xi units
-        read through an ESPHome proxy. Earlier notes claimed a >250 ms pause
-        before the trailing type string; that was not reproduced.
+        See `framing` for what this has measured and how the constants are
+        derived from it.
         """
         if len(self.arrivals) < 2:
             return None
@@ -196,8 +195,7 @@ class AsyncBus:
         arrivals: list[tuple[float, int]] = []
         while True:
             # The first byte gets the long window; subsequent bytes only need
-            # to clear the inter-byte gap. Measured reply start is 44-413 ms,
-            # so the 2.5 s default is roughly 6x margin.
+            # to clear the inter-byte gap.
             timeout = self._start_timeout_s if not buf else self._gap_s
             try:
                 chunk = await asyncio.wait_for(self._reader.read(256), timeout)

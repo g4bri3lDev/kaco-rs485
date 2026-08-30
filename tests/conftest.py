@@ -62,6 +62,16 @@ ALL_CAPTURES = _load()
 CMD0_CAPTURES = [c for c in ALL_CAPTURES if c.command == "0" and len(c.raw) <= 70]
 CMD3_CAPTURES = [c for c in ALL_CAPTURES if c.command == "3" and len(c.raw) <= 70]
 
+# Well-formed single cmd `8` replies. Address 1's 79-byte capture is two
+# overlapping replies from the era when the blueplanet still shared address 1
+# with WR1, so it is excluded the same way the oversized cmd `0` ones are.
+CMD8_CAPTURES = [c for c in ALL_CAPTURES if c.command == "8" and c.raw.count(b"\n*") == 1]
+
+# An xi firmware reply specifically. The blueplanet answers cmd `8` with a much
+# longer ARM/Config/DSP string, which is a different shape and not what the
+# integration names its devices from.
+CMD8_XI_CAPTURES = [c for c in CMD8_CAPTURES if b"K222" in c.raw]
+
 
 @pytest.fixture(params=CMD0_CAPTURES, ids=repr)
 def cmd0_capture(request: pytest.FixtureRequest) -> Capture:

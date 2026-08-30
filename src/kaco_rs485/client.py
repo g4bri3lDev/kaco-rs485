@@ -19,7 +19,15 @@ import asyncio
 import time
 from dataclasses import dataclass, field
 
-from .protocol import MeasuredValues, ParseError, TotalYield, parse_cmd0, parse_cmd3
+from .protocol import (
+    Firmware,
+    MeasuredValues,
+    ParseError,
+    TotalYield,
+    parse_cmd0,
+    parse_cmd3,
+    parse_cmd8,
+)
 from .transport import AsyncBus
 
 # Defaults, all overridable per client. These came out of debugging a real
@@ -47,8 +55,21 @@ MAX_ATTEMPTS = 3
 RETRY_DELAY_S = 1.0
 
 # Commands per cycle: `0` is fast-changing measured values, `3` is the yield
-# and uptime counters. Static data (`8`, `9`) is read once at startup.
+# and uptime counters.
 CYCLE_COMMANDS = ("0", "3")
+
+# Static per-unit data, asked for once per address on first contact rather than
+# every cycle. Command `8` is the only one worth asking for, which took asking
+# the hardware to establish (xi units, firmware K222.36DE, 2026-08):
+#
+#   cmd `8` -> "K222.36DE 6817"   the firmware version. Useful.
+#   cmd `9` -> "6400xi"           the same type string cmd `0` already carries
+#                                 in every reply, so it buys nothing.
+#   cmd `s` -> zero bytes         serial number, blueplanet-only. xi units do
+#                                 not answer it at all, which is why devices
+#                                 built from this library have no serial number
+#                                 and must be identified by bus address.
+STATIC_COMMAND = "8"
 
 
 @dataclass
@@ -58,6 +79,9 @@ class InverterState:
     address: int
     measured: MeasuredValues | None = None
     totals: TotalYield | None = None
+    firmware: str | None = None
+    """Vendor firmware string, e.g. "K222.36DE 6817". Read once, on first
+    contact — `None` until the inverter has answered at least one poll."""
     consecutive_misses: int = 0
     last_polled: float = field(default=0.0)
     sleep_after: int = SLEEP_AFTER_MISSES
@@ -138,9 +162,25 @@ class KacoRs485Client:
 
         state.consecutive_misses = 0 if answered else state.consecutive_misses + 1
 
+        if answered and state.firmware is None:
+            await self._read_static(state)
+
+    async def _read_static(self, state: InverterState) -> None:
+        """Fetch the data that never changes, once per address.
+
+        Deliberately does not touch `consecutive_misses`: this is a bonus read,
+        and an inverter that answers its measured values but not command `8` is
+        alive and must not be counted towards the sleep backoff for it. If it
+        fails, `firmware` stays `None` and the next cycle tries again.
+        """
+        await asyncio.sleep(self._poll_gap_s)
+        _responded, parsed = await self._request_with_retry(state.address, STATIC_COMMAND)
+        if isinstance(parsed, Firmware):
+            state.firmware = parsed.raw_text
+
     async def _request_with_retry(
         self, address: int, command: str
-    ) -> tuple[bool, MeasuredValues | TotalYield | None]:
+    ) -> tuple[bool, MeasuredValues | TotalYield | Firmware | None]:
         """Poll one (address, command), retrying only corrupt replies.
 
         Returns (the inverter answered at all, parsed value or None). Those are
@@ -164,6 +204,8 @@ class KacoRs485Client:
                     return True, parse_cmd0(reply.raw)
                 if command == "3":
                     return True, parse_cmd3(reply.raw)
+                if command == STATIC_COMMAND:
+                    return True, parse_cmd8(reply.raw)
             except ParseError:
                 continue  # corrupt frame: worth another attempt
 

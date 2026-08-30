@@ -15,10 +15,14 @@ from kaco_rs485 import client as client_module
 from kaco_rs485.client import SLEEP_AFTER_MISSES, SLEEP_RETRY_S, KacoRs485Client
 from kaco_rs485.transport import Reply
 
-from .conftest import CMD0_CAPTURES, CMD3_CAPTURES
+from .conftest import CMD0_CAPTURES, CMD3_CAPTURES, CMD8_XI_CAPTURES
 
 CMD0_FRAME = CMD0_CAPTURES[0].raw
 CMD3_FRAME = CMD3_CAPTURES[0].raw
+CMD8_FRAME = CMD8_XI_CAPTURES[0].raw
+
+# What `parse_cmd8` pulls out of CMD8_FRAME, e.g. "K222.36DE 6817".
+CMD8_TEXT = CMD8_FRAME[5:].split(b"\r", 1)[0].strip().decode()
 
 
 class FakeBus:
@@ -32,11 +36,14 @@ class FakeBus:
         self.requests.append((address, command))
         if address not in self.alive:
             return Reply(request=b"", raw=b"", elapsed_ms=2500.0)
-        raw = CMD0_FRAME if command == "0" else CMD3_FRAME
+        raw = {"0": CMD0_FRAME, "3": CMD3_FRAME, "8": CMD8_FRAME}[command]
         return Reply(request=b"", raw=raw, elapsed_ms=2000.0)
 
     def addresses_polled(self) -> set[int]:
         return {addr for addr, _ in self.requests}
+
+    def commands(self, command: str) -> list[tuple[int, str]]:
+        return [r for r in self.requests if r[1] == command]
 
 
 @pytest.fixture(autouse=True)
@@ -154,9 +161,10 @@ async def test_requests_are_paced(monkeypatch: pytest.MonkeyPatch) -> None:
     await client.poll_cycle()
 
     kinds = [kind for kind, _ in events]
-    # 3 inverters x 2 commands = 6 requests, strictly alternating with gaps.
-    assert kinds.count("request") == 6
-    assert kinds == ["request"] + ["sleep", "request"] * 5
+    # 3 inverters x 2 cycle commands, plus a one-shot firmware read each on
+    # first contact = 9 requests, strictly alternating with gaps.
+    assert kinds.count("request") == 9
+    assert kinds == ["request"] + ["sleep", "request"] * 8
     assert all(seconds >= client_module.POLL_GAP_S for kind, seconds in events if kind == "sleep")
 
 
@@ -175,6 +183,79 @@ async def test_parse_errors_do_not_count_as_a_missing_inverter() -> None:
     assert client.states[1].consecutive_misses == 0
     assert client.states[1].available
     assert client.states[1].measured is None
+
+
+# --- static per-unit data ------------------------------------------------
+
+
+async def test_firmware_is_read_on_first_contact() -> None:
+    bus = FakeBus(alive={1})
+    client = KacoRs485Client(bus, [1])  # type: ignore[arg-type]
+
+    await client.poll_cycle()
+
+    assert client.states[1].firmware == CMD8_TEXT
+    assert len(bus.commands("8")) == 1
+
+
+async def test_firmware_is_not_re_read_every_cycle() -> None:
+    """It is static data on a shared bus — asking again costs a slot forever."""
+    bus = FakeBus(alive={1})
+    client = KacoRs485Client(bus, [1])  # type: ignore[arg-type]
+
+    for _ in range(5):
+        await client.poll_cycle()
+
+    assert len(bus.commands("8")) == 1
+
+
+async def test_silent_inverter_is_not_asked_for_firmware() -> None:
+    """A dark inverter must not pay an extra 2.5 s timeout for static data."""
+    bus = FakeBus(alive=set())
+    client = KacoRs485Client(bus, [1])  # type: ignore[arg-type]
+
+    await client.poll_cycle()
+
+    assert client.states[1].firmware is None
+    assert bus.commands("8") == []
+
+
+async def test_firmware_is_read_when_a_dark_inverter_wakes(fake_clock: Any) -> None:
+    """Set up at dusk, the type is unknown; it must be filled in at sunrise."""
+    bus = FakeBus(alive=set())
+    client = KacoRs485Client(bus, [1])  # type: ignore[arg-type]
+
+    for _ in range(SLEEP_AFTER_MISSES):
+        await client.poll_cycle()
+        fake_clock.advance(10.0)
+    assert client.states[1].firmware is None
+
+    bus.alive.add(1)
+    fake_clock.advance(SLEEP_RETRY_S + 1)
+    await client.poll_cycle()
+
+    assert client.states[1].firmware == CMD8_TEXT
+
+
+async def test_unreadable_firmware_does_not_affect_availability() -> None:
+    """Static data is a bonus read; failing it must not mark a live unit dark."""
+
+    class NoFirmwareBus(FakeBus):
+        async def request(self, address: int, command: str) -> Reply:
+            if command == "8":
+                self.requests.append((address, command))
+                return Reply(request=b"", raw=b"", elapsed_ms=2500.0)
+            return await super().request(address, command)
+
+    bus = NoFirmwareBus(alive={1})
+    client = KacoRs485Client(bus, [1])  # type: ignore[arg-type]
+
+    await client.poll_cycle()
+
+    assert client.states[1].firmware is None
+    assert client.states[1].consecutive_misses == 0
+    assert client.states[1].available
+    assert client.states[1].measured is not None
 
 
 # --- retry policy --------------------------------------------------------

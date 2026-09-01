@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/g4bri3lDev/kaco-rs485/compare/v0.3.0...v0.3.1) (2026-09-01)
+
+
+### Documentation
+
+* xi units do report status 15, for about two minutes ([#8](https://github.com/g4bri3lDev/kaco-rs485/issues/8)) ([46c3338](https://github.com/g4bri3lDev/kaco-rs485/commit/46c3338d801b8e195622165a8fe7b194311e28c9))
+
 ## [0.3.0](https://github.com/g4bri3lDev/kaco-rs485/compare/v0.2.0...v0.3.0) (2026-08-30)
 
 

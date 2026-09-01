@@ -14,10 +14,26 @@ on-site debugging to get right, and those lessons are encoded here:
   word. From then until morning they return nothing: a passive listen on the
   bus hears zero bytes, and every address times out.
 
-  Note they never report status 15, `Night shutdown`, even though the vendor
-  defines it and its own datalogger treats it as a reason to skip polling.
-  These units simply leave the bus, so silence is the only signal available —
-  and it is indistinguishable from a unit that has been disconnected.
+  They announce it first, but only just. Recorded 2026-09-01:
+
+      WR1   19:36:05  Waiting
+            20:10:45  Night shutdown      (status 15)
+            20:12:59  stops answering
+      WR2   20:11:27  Night shutdown
+            20:13:38  stops answering
+
+  Roughly **two minutes** of status 15 while still on the bus, then silence. An
+  earlier note here claimed status 15 is never reported; that was written after
+  sampling one evening between 20:13 and 20:19, which lands after the window had
+  closed. Easy to miss at a 30 s poll interval, and easy to miss again.
+
+  Not every unit does it: on the same evening WR4 went to `Waiting` and stayed
+  there until it stopped answering, never showing 15.
+
+  Worth knowing because status 15 distinguishes "gone dark for the night" from
+  "disconnected or dead", which silence alone cannot -- but it is too brief and
+  too inconsistent to rely on. The backoff below is still driven purely by
+  consecutive misses, which is the robust signal.
 
   Polling a dark inverter costs a full REPLY_START_TIMEOUT_S (2.5 s) per
   command, so a fleet that has gone to sleep otherwise spends all night timing

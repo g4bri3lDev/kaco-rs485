@@ -22,6 +22,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import time
+import typing
 from dataclasses import dataclass, field
 from types import TracebackType
 from typing import Self
@@ -69,6 +70,16 @@ class Reply:
         if len(self.arrivals) < 2:
             return None
         return max(b[0] - a[0] for a, b in zip(self.arrivals, self.arrivals[1:], strict=False))
+
+
+class Requestable(typing.Protocol):
+    """The one thing most consumers need off a bus: ask, and read the answer.
+
+    Narrower than `AsyncBus` on purpose, so anything that can answer a request —
+    including `kaco_rs485.testing.FakeBus` — satisfies it.
+    """
+
+    async def request(self, address: int, command: str) -> Reply: ...
 
 
 class BusError(Exception):

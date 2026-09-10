@@ -13,6 +13,7 @@ import pytest
 
 from kaco_rs485 import client as client_module
 from kaco_rs485.client import SLEEP_AFTER_MISSES, SLEEP_RETRY_S, KacoRs485Client
+from kaco_rs485.testing import a_bus
 from kaco_rs485.transport import Reply
 
 from .conftest import CMD0_CAPTURES, CMD3_CAPTURES, CMD8_XI_CAPTURES
@@ -366,3 +367,24 @@ async def test_connection_loss_surfaces_as_bus_error() -> None:
 
     with pytest.raises(BusError):
         await bus.request(1, "0")
+
+
+async def test_reply_latency_is_recorded_per_inverter() -> None:
+    """Diagnostics need bus health without re-plumbing Reply objects out."""
+    bus = a_bus([1], reply_ms=250.0)
+    client = KacoRs485Client(bus, [1], poll_gap_s=0)
+
+    assert client.states[1].last_reply_ms is None
+
+    await client.poll_cycle()
+
+    assert client.states[1].last_reply_ms == pytest.approx(250.0)
+
+
+async def test_a_silent_inverter_records_no_latency() -> None:
+    """A timeout is not a measurement."""
+    client = KacoRs485Client(a_bus([]), [1], poll_gap_s=0)
+
+    await client.poll_cycle()
+
+    assert client.states[1].last_reply_ms is None

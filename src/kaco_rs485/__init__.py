@@ -24,7 +24,7 @@ from .status import (
     status_slug,
     status_text,
 )
-from .transport import AsyncBus, BusError, Reply
+from .transport import AsyncBus, BusError, Reply, Requestable
 
 __all__ = [
     "STATUS_OPTIONS",
@@ -39,6 +39,7 @@ __all__ = [
     "ParseError",
     "Protocol",
     "Reply",
+    "Requestable",
     "TotalYield",
     "build_request",
     "is_fault",

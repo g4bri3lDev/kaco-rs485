@@ -21,13 +21,12 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-import typing
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 
 from .client import POLL_GAP_S, STATIC_COMMAND
 from .protocol import ParseError, Protocol, parse_cmd0, parse_cmd8
-from .transport import Reply
+from .transport import Requestable
 
 # The KACO standard protocol allows addresses 1-32.
 ALL_ADDRESSES = range(1, 33)
@@ -71,17 +70,6 @@ class ScanResult:
     @property
     def unsupported(self) -> list[Discovered]:
         return [d for d in self.found if not d.supported]
-
-
-class Requestable(typing.Protocol):
-    """The one thing a scan needs off a bus.
-
-    Narrower than `AsyncBus` on purpose: a scan only ever asks a question and
-    reads the answer, so anything that can do that — including a test double —
-    is enough.
-    """
-
-    async def request(self, address: int, command: str) -> Reply: ...
 
 
 async def scan(

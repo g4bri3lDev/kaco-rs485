@@ -57,7 +57,7 @@ from .protocol import (
     parse_cmd3,
     parse_cmd8,
 )
-from .transport import AsyncBus
+from .transport import Reply, Requestable
 
 # Defaults, all overridable per client. These came out of debugging a real
 # three-inverter installation; they are reasonable starting points, not
@@ -112,6 +112,11 @@ class InverterState:
     """Vendor firmware string, e.g. "K222.36DE 6817". Read once, on first
     contact — `None` until the inverter has answered at least one poll."""
     consecutive_misses: int = 0
+    last_reply_ms: float | None = None
+    """Time-to-first-byte of this inverter's most recent reply, in ms.
+
+    Kept so consumers can report bus health without re-plumbing `Reply` objects
+    out of the client. `None` until the inverter has answered once."""
     last_polled: float = field(default=0.0)
     sleep_after: int = SLEEP_AFTER_MISSES
 
@@ -136,7 +141,7 @@ class KacoRs485Client:
 
     def __init__(
         self,
-        bus: AsyncBus,
+        bus: Requestable,
         addresses: list[int],
         *,
         poll_gap_s: float = POLL_GAP_S,
@@ -174,8 +179,10 @@ class KacoRs485Client:
             if j:
                 await asyncio.sleep(self._poll_gap_s)
 
-            responded, parsed = await self._request_with_retry(state.address, command)
+            responded, parsed, reply = await self._request_with_retry(state.address, command)
             answered = answered or responded
+            if reply is not None and reply.first_byte_ms is not None:
+                state.last_reply_ms = reply.first_byte_ms
 
             # The command decides which shape comes back; narrow so that is
             # checked rather than assumed.
@@ -203,19 +210,20 @@ class KacoRs485Client:
         fails, `firmware` stays `None` and the next cycle tries again.
         """
         await asyncio.sleep(self._poll_gap_s)
-        _responded, parsed = await self._request_with_retry(state.address, STATIC_COMMAND)
+        _responded, parsed, _reply = await self._request_with_retry(state.address, STATIC_COMMAND)
         if isinstance(parsed, Firmware):
             state.firmware = parsed.raw_text
 
     async def _request_with_retry(
         self, address: int, command: str
-    ) -> tuple[bool, MeasuredValues | TotalYield | Firmware | None]:
+    ) -> tuple[bool, MeasuredValues | TotalYield | Firmware | None, Reply | None]:
         """Poll one (address, command), retrying only corrupt replies.
 
-        Returns (the inverter answered at all, parsed value or None). Those are
-        two different questions: a garbled frame proves the inverter is alive
-        and must not count towards the sleep backoff, but it yields no value
-        and the previous reading is kept rather than a fabricated one.
+        Returns (the inverter answered at all, parsed value or None, the last
+        reply). The first two are different questions: a garbled frame proves
+        the inverter is alive and must not count towards the sleep backoff, but
+        it yields no value and the previous reading is kept rather than a
+        fabricated one. The reply is carried out so callers can record timing.
         """
         for attempt in range(self._max_attempts):
             if attempt:
@@ -226,23 +234,23 @@ class KacoRs485Client:
             if not reply.responded:
                 # Silence is not worth retrying — the inverter is off, and we
                 # have already paid a full start timeout finding that out.
-                return False, None
+                return False, None, reply
 
             try:
                 if command == "0":
-                    return True, parse_cmd0(reply.raw)
+                    return True, parse_cmd0(reply.raw), reply
                 if command == "3":
-                    return True, parse_cmd3(reply.raw)
+                    return True, parse_cmd3(reply.raw), reply
                 if command == STATIC_COMMAND:
-                    return True, parse_cmd8(reply.raw)
+                    return True, parse_cmd8(reply.raw), reply
             except ParseError:
                 continue  # corrupt frame: worth another attempt
 
-            return True, None
+            return True, None, reply
 
         # Every attempt produced a frame, none of them parseable. The inverter
         # is present but something on the bus is mangling its replies.
-        return True, None
+        return True, None, reply
 
     def should_poll(self, state: InverterState, now: float) -> bool:
         """Decide whether `state` gets a request this cycle.

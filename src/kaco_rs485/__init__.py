@@ -14,6 +14,7 @@ from .protocol import (
     parse_cmd3,
     parse_cmd8,
     parse_cmd9,
+    uptime_hours,
 )
 from .status import (
     STATUS_OPTIONS,
@@ -47,4 +48,5 @@ __all__ = [
     "parse_cmd9",
     "status_slug",
     "status_text",
+    "uptime_hours",
 ]

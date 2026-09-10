@@ -134,6 +134,18 @@ class MeasuredValues:
     inverter_type: str  # e.g. "6400xi"
     checksum_ok: bool
 
+    # Below this DC input the quotient is dominated by the inverter's own
+    # consumption and swings wildly, so efficiency is reported as unknown
+    # rather than as a number nobody should act on.
+    EFFICIENCY_FLOOR_W = 100
+
+    @property
+    def efficiency_percent(self) -> float | None:
+        """AC out over DC in, or None while there is too little sun to mean anything."""
+        if self.dc_power_w <= self.EFFICIENCY_FLOOR_W:
+            return None
+        return round(100 * self.ac_power_w / self.dc_power_w, 1)
+
 
 class ParseError(ValueError):
     """Raised when a reply doesn't match the series-"00" command-`0` shape."""
@@ -195,6 +207,22 @@ def parse_cmd0(raw: bytes) -> MeasuredValues:
 # --- Command `3` reply parsing (total yield + hours) ---------------------
 
 
+def uptime_hours(value: str | None) -> float | None:
+    """`hhhhhh:mm` -> hours, or None if it is not that shape.
+
+    Returned as a float rather than a timedelta because the hour field is six
+    digits wide and counts from commissioning: real units are already past
+    70,000 hours, which no time type renders usefully.
+    """
+    if not value or ":" not in value:
+        return None
+    hours, _, minutes = value.partition(":")
+    try:
+        return int(hours) + int(minutes) / 60
+    except ValueError:
+        return None
+
+
 @dataclass
 class TotalYield:
     """Decoded `#<adr>3<CR>` reply.
@@ -216,6 +244,16 @@ class TotalYield:
     daily_uptime: str  # D5 — `hhhhhh:mm`
     short_time_uptime: str  # D6
     total_uptime: str  # D7
+
+    @property
+    def daily_uptime_hours(self) -> float | None:
+        """`daily_uptime` as hours, or None if it did not parse."""
+        return uptime_hours(self.daily_uptime)
+
+    @property
+    def total_uptime_hours(self) -> float | None:
+        """`total_uptime` as hours, or None if it did not parse."""
+        return uptime_hours(self.total_uptime)
 
 
 def parse_cmd3(raw: bytes) -> TotalYield:

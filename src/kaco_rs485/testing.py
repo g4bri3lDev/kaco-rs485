@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
+from typing import Self
 
 from .framing import REPLY_START_TIMEOUT_S
 from .protocol import build_request
@@ -103,7 +104,7 @@ BLUEPLANET = CannedInverter(
 
 
 class FakeBus:
-    """A `Requestable` serving canned frames. Silence is the default.
+    """A stand-in for `AsyncBus`, serving canned frames. Silence is the default.
 
     Any address without an inverter answers with an empty `Reply` after the full
     start timeout, exactly as a vacant address does on real hardware. That makes
@@ -124,6 +125,16 @@ class FakeBus:
     """Every (address, command) asked, in order — for asserting on pacing and
     on which commands a consumer actually issues."""
 
+    opened: bool
+    """Whether the bus is currently open. Consumers are expected to release the
+    port on failure, and this is how a test checks that they did."""
+
+    open_error: Exception | None
+    """Raised by `open()` when set — a port that cannot be opened at all."""
+
+    request_error: Exception | None
+    """Raised by `request()` when set — a connection lost mid-poll."""
+
     def __init__(
         self,
         inverters: Mapping[int, CannedInverter] | None = None,
@@ -133,8 +144,32 @@ class FakeBus:
         self.inverters = dict(inverters or {})
         self.reply_ms = reply_ms
         self.requests = []
+        self.opened = False
+        self.open_error = None
+        self.request_error = None
+
+    async def open(self) -> None:
+        """Open the bus, or raise whatever `open_error` holds."""
+        if self.open_error is not None:
+            raise self.open_error
+        self.opened = True
+
+    async def close(self) -> None:
+        """Release the bus."""
+        self.opened = False
+
+    async def __aenter__(self) -> Self:
+        await self.open()
+        return self
+
+    async def __aexit__(self, *exc_info: object) -> bool:
+        await self.close()
+        return False
 
     async def request(self, address: int, command: str) -> Reply:
+        """Answer one request, or raise whatever `request_error` holds."""
+        if self.request_error is not None:
+            raise self.request_error
         self.requests.append((address, command))
         raw = self.inverters[address].reply_to(command) if address in self.inverters else b""
 

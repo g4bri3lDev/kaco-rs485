@@ -14,6 +14,7 @@ from pathlib import Path
 
 import pytest
 
+from kaco_rs485 import BusError
 from kaco_rs485.discovery import scan
 from kaco_rs485.protocol import parse_cmd0, parse_cmd3, parse_cmd8
 from kaco_rs485.testing import (
@@ -124,3 +125,32 @@ async def test_scan_of_a_dark_bus_finds_nothing_but_is_not_an_error() -> None:
 
     assert result.found == []
     assert not result.saw_any_bytes
+
+
+async def test_fake_bus_stands_in_for_a_real_connection() -> None:
+    """It must answer both `async with` and open()/close(), as AsyncBus does."""
+    bus = a_bus([1])
+
+    async with bus as opened:
+        assert opened.opened
+        assert (await opened.request(1, "0")).responded
+
+    assert not bus.opened
+
+
+async def test_a_port_that_will_not_open_raises() -> None:
+    bus = a_bus([1])
+    bus.open_error = BusError("could not open /dev/ttyUSB0")
+
+    with pytest.raises(BusError):
+        await bus.open()
+    assert not bus.opened
+
+
+async def test_a_connection_lost_mid_poll_raises() -> None:
+    bus = a_bus([1])
+    await bus.open()
+    bus.request_error = BusError("connection closed")
+
+    with pytest.raises(BusError):
+        await bus.request(1, "0")

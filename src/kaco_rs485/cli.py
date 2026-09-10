@@ -32,6 +32,7 @@ import datetime as dt
 import json
 import sys
 from pathlib import Path
+from typing import Any, TextIO
 
 from . import framing
 from .client import CYCLE_COMMANDS, POLL_GAP_S, KacoRs485Client
@@ -169,7 +170,7 @@ async def cmd_listen(bus: AsyncBus, args: argparse.Namespace) -> int:
 
 async def cmd_sweep(bus: AsyncBus, args: argparse.Namespace) -> int:
     log = _open_log(args)
-    records: list[dict] = []
+    records: list[dict[str, Any]] = []
     responded: set[int] = set()
     saw_bytes = False
 
@@ -210,7 +211,7 @@ async def cmd_sweep(bus: AsyncBus, args: argparse.Namespace) -> int:
     return 0 if responded else 1
 
 
-def _record(reply: Reply, address: int, command: str) -> dict:
+def _record(reply: Reply, address: int, command: str) -> dict[str, Any]:
     """A capture entry, including the raw bytes and the arrival timing.
 
     `rx_hex` is deliberately included so a session can be replayed through the
@@ -233,7 +234,7 @@ def _record(reply: Reply, address: int, command: str) -> dict:
     }
 
 
-def _report_timings(records: list[dict]) -> None:
+def _report_timings(records: list[dict[str, Any]]) -> None:
     """Compare what actually happened against the configured timeouts.
 
     The constants in `framing` came from a small number of captures on one
@@ -347,7 +348,7 @@ async def cmd_poll(bus: AsyncBus, args: argparse.Namespace) -> int:
         await asyncio.sleep(args.interval)
 
 
-def _open_log(args: argparse.Namespace):
+def _open_log(args: argparse.Namespace) -> TextIO | None:
     if not args.log_dir:
         return None
     directory = Path(args.log_dir)
@@ -358,7 +359,15 @@ def _open_log(args: argparse.Namespace):
     return handle
 
 
-def _report(reply: Reply, address: int, command: str, label: str, log, *, verbose: bool) -> None:
+def _report(
+    reply: Reply,
+    address: int,
+    command: str,
+    label: str,
+    log: TextIO | None,
+    *,
+    verbose: bool,
+) -> None:
     if not reply.responded:
         print(f"  addr={address:02d} cmd={command!r} ({label})  no reply")
         if log:

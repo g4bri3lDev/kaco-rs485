@@ -24,7 +24,14 @@ jobs:
         run: uv run ruff check .
       - name: Format
         run: uv run ruff format --check .
-      - name: Types
-        run: uv run mypy src/ tests/
+      # The shipped package is checked under --strict: it is consumed as a typed
+      # dependency (py.typed), so anything mypy cannot verify here becomes an
+      # untyped hole in every downstream caller. Tests are checked at the
+      # default level — they monkeypatch module internals, which --strict's
+      # no-implicit-reexport rejects for no benefit.
+      - name: Types (package, strict)
+        run: uv run mypy --strict src/
+      - name: Types (tests)
+        run: uv run mypy tests/
       - name: Tests
         run: uv run pytest

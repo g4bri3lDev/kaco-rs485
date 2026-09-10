@@ -121,7 +121,7 @@ class AsyncBus:
         if self._key is not None:
             kwargs["key"] = self._key
         try:
-            self._reader, self._writer = await serialx.open_serial_connection(**kwargs)  # type: ignore[arg-type]
+            self._reader, self._writer = await serialx.open_serial_connection(**kwargs)
         except Exception as err:
             raise BusError(f"could not open {self._url}: {err}") from err
 

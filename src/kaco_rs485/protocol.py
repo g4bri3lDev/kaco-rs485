@@ -16,6 +16,7 @@ exactly which other commands need parsers and can add them.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 
@@ -164,7 +165,7 @@ def parse_cmd0(raw: bytes) -> MeasuredValues:
     except ValueError as e:
         raise ParseError(f"address bytes not numeric: {raw[2:4]!r}") from e
 
-    def num(slice_: bytes, conv):
+    def num[T](slice_: bytes, conv: Callable[[str], T]) -> T:
         s = slice_.strip().decode("ascii", errors="replace")
         try:
             return conv(s)

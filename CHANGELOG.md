@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.4.0](https://github.com/g4bri3lDev/kaco-rs485/compare/v0.3.0...v0.4.0) (2026-09-10)
+
+
+### Features
+
+* add kaco_rs485.testing, doubles built from captured frames ([9d1f07b](https://github.com/g4bri3lDev/kaco-rs485/commit/9d1f07b5dfd0a43dfa5b4d5ee75926cd323ee872))
+* add stable status slugs for consumers with a fixed vocabulary ([11a64ac](https://github.com/g4bri3lDev/kaco-rs485/commit/11a64ac5b47063f5d30c6a526af9cfefd5786586))
+* ship py.typed so consumers can see our types ([ae084dc](https://github.com/g4bri3lDev/kaco-rs485/commit/ae084dc1863cf98405635f21c39d6a2a1c36e72e))
+
+
+### Documentation
+
+* explain why serialx is a range and never a pin ([47f902d](https://github.com/g4bri3lDev/kaco-rs485/commit/47f902d5fa8868519d0a8f574d8f1a6b022fc4bb))
+* xi units do report status 15, for about two minutes ([#8](https://github.com/g4bri3lDev/kaco-rs485/issues/8)) ([46c3338](https://github.com/g4bri3lDev/kaco-rs485/commit/46c3338d801b8e195622165a8fe7b194311e28c9))
+
 ## [0.3.0](https://github.com/g4bri3lDev/kaco-rs485/compare/v0.2.0...v0.3.0) (2026-08-30)
 
 

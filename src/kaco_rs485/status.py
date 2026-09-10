@@ -154,6 +154,148 @@ FAULT: Final[dict[int, str]] = {
 
 STATUS_TEXT: Final[dict[int, str]] = {**OPERATING, **FAULT}
 
+# Stable machine-readable name per code, for consumers that need a fixed
+# vocabulary rather than display text — Home Assistant's enum sensor being the
+# motivating case, where every possible state must be declared up front and
+# translated.
+#
+# These are DATA, not derived from the labels above, and that is deliberate. The
+# labels have been corrected more than once (see the vendor-bug notes), and if a
+# slug were computed from its label then any future wording fix would silently
+# rename a state and break every automation keyed on it. A label may change; a
+# slug never may.
+#
+# Codes the vendor names identically share a slug — 4/5 "MPP tracking", 6/7
+# "Waiting", 32/59 "Selftest error". That is intentional: they are the same
+# state as far as the vendor is concerned, and a consumer asking "is it
+# tracking?" should not have to test two values. The raw code remains available
+# for anyone who needs to tell them apart.
+STATUS_SLUG: Final[dict[int, str]] = {
+    0: "startup",
+    1: "waiting_for_dc_voltage",
+    2: "waiting_for_shutdown",
+    3: "constant_voltage_mode",
+    4: "mpp_tracking",
+    5: "mpp_tracking",
+    6: "waiting",
+    7: "waiting",
+    8: "relay_test",
+    9: "fault_finding_mode",
+    10: "overtemperature_shutdown",
+    11: "power_limiting_active",
+    12: "overload_shutdown",
+    13: "overvoltage_shutdown",
+    14: "grid_failure",
+    15: "night_shutdown",
+    16: "operation_inhibited",
+    17: "powador_protect_shutdown",
+    18: "residual_current_shutdown_afi_rcd",
+    19: "insulation_resistance_too_low",
+    21: "protective_shutdown_pv_string_1",
+    22: "protective_shutdown_pv_string_2",
+    23: "protective_shutdown_pv_string_3",
+    24: "dsp_error",
+    25: "testing_l_electronics",
+    26: "testing_grid_relay",
+    27: "extended_selftest",
+    28: "hardware_error",
+    29: "dc_ground_fault",
+    30: "measurement_transformer_error",
+    31: "rcd_module_error",
+    32: "selftest_error",
+    33: "dc_feed_in_error",
+    34: "communication_error",
+    35: "protective_shutdown_software",
+    36: "protective_shutdown_hardware",
+    37: "unknown_hardware",
+    38: "pv_overvoltage_error",
+    39: "temperature_sensor_defective",
+    40: "snow_melting",
+    41: "grid_undervoltage_l1",
+    42: "grid_overvoltage_l1",
+    43: "grid_undervoltage_l2",
+    44: "grid_overvoltage_l2",
+    45: "grid_undervoltage_l3",
+    46: "grid_overvoltage_l3",
+    47: "grid_phase_conductor_fault",
+    48: "grid_underfrequency",
+    49: "grid_overfrequency",
+    50: "grid_average_voltage_fault",
+    51: "grid_mean_voltage_under_l1",
+    52: "grid_mean_voltage_over_l1",
+    53: "grid_mean_voltage_under_l2",
+    54: "grid_mean_voltage_over_l2",
+    55: "dc_link_error",
+    57: "waiting_for_reconnect",
+    58: "control_card_overtemperature",
+    59: "selftest_error",
+    60: "dc_overvoltage_waiting_for_pv_voltage_to_drop",
+    61: "external_power_limiting_active",
+    62: "island_operation_pac",
+    63: "frequency_dependent_power_reduction",
+    64: "ac_current_limit_reached",
+    65: "rocof_error",
+    66: "plausibility_error",
+    67: "power_unit_1_failure",
+    68: "power_unit_2_failure",
+    69: "power_unit_3_failure",
+    70: "fan_1_failure",
+    71: "fan_2_failure",
+    72: "fan_3_failure",
+    73: "island_operation_error",
+    74: "external_reactive_power_demand",
+    75: "selftest_in_progress",
+    76: "waiting_for_wind",
+    77: "check_dc_isolator_switch",
+    78: "residual_current_too_high",
+    79: "insulation_measurement",
+    80: "insulation_measurement_not_possible",
+    81: "shutdown_grid_voltage_l1",
+    82: "shutdown_grid_voltage_l2",
+    83: "shutdown_grid_voltage_l3",
+    84: "shutdown_dc_link_undervoltage",
+    85: "shutdown_dc_link_overvoltage",
+    86: "shutdown_dc_link_asymmetry",
+    87: "shutdown_overcurrent_l1",
+    88: "shutdown_overcurrent_l2",
+    89: "shutdown_overcurrent_l3",
+    90: "shutdown_5v_supply_collapse",
+    91: "shutdown_2_5v_supply_collapse",
+    92: "shutdown_1_5v_supply_collapse",
+    93: "selftest_error_buffer_1",
+    94: "selftest_error_buffer_2",
+    95: "selftest_error_relay_1",
+    96: "selftest_error_relay_2",
+    97: "shutdown_hardware_overcurrent",
+    98: "shutdown_hardware_gate_driver",
+    99: "shutdown_hardware_buffer_enable",
+    100: "shutdown_hardware_overtemperature",
+    101: "plausibility_error_temperature_sensor",
+    102: "plausibility_error_efficiency",
+    103: "plausibility_error_voltage",
+    104: "plausibility_error_afi_module",
+    105: "plausibility_error_relay_voltage",
+    106: "plausibility_error_dc_dc",
+    107: "check_overvoltage_protection",
+    108: "critical_overvoltage_l1",
+    109: "critical_overvoltage_l2",
+    110: "critical_overvoltage_l3",
+    111: "critical_undervoltage_l1",
+    112: "critical_undervoltage_l2",
+    113: "critical_undervoltage_l3",
+    114: "dc_dc_converter_communication_error",
+    115: "negative_pv_current_1",
+    116: "negative_pv_current_2",
+    117: "negative_pv_current_3",
+    118: "pv_overvoltage_1",
+    119: "pv_overvoltage_2",
+    120: "pv_overvoltage_3",
+}
+
+# Every distinct slug, sorted. Consumers that must declare their full vocabulary
+# up front (again: HA enum sensors) can use this directly.
+STATUS_OPTIONS: Final[list[str]] = sorted(set(STATUS_SLUG.values()))
+
 # The inverter's own report that it has shut down for the night. The vendor
 # datalogger treats this as a reason to stop polling until morning.
 NIGHT_SHUTDOWN: Final = 15
@@ -166,6 +308,19 @@ def status_text(code: int) -> str:
     number is the only thing that lets you look it up in the manual.
     """
     return STATUS_TEXT.get(code, f"Code {code}")
+
+
+def status_slug(code: int) -> str | None:
+    """Stable machine-readable name, or `None` for a code not in the table.
+
+    Deliberately does *not* fall back the way `status_text` does. A caller with
+    a fixed vocabulary — an enum sensor declaring its options up front — cannot
+    accept an invented value: emitting `code_42` for an undocumented code would
+    either be rejected as out-of-vocabulary or, worse, silently become a new
+    state nobody declared. `None` says "no documented state for this", which the
+    caller can render as unknown while keeping the raw code visible elsewhere.
+    """
+    return STATUS_SLUG.get(code)
 
 
 def is_fault(code: int) -> bool:

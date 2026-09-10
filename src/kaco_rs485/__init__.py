@@ -15,10 +15,19 @@ from .protocol import (
     parse_cmd8,
     parse_cmd9,
 )
-from .status import STATUS_TEXT, is_fault, status_text
+from .status import (
+    STATUS_OPTIONS,
+    STATUS_SLUG,
+    STATUS_TEXT,
+    is_fault,
+    status_slug,
+    status_text,
+)
 from .transport import AsyncBus, BusError, Reply
 
 __all__ = [
+    "STATUS_OPTIONS",
+    "STATUS_SLUG",
     "STATUS_TEXT",
     "AsyncBus",
     "BusError",
@@ -36,5 +45,6 @@ __all__ = [
     "parse_cmd3",
     "parse_cmd8",
     "parse_cmd9",
+    "status_slug",
     "status_text",
 ]

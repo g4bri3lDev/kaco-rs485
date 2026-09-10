@@ -16,7 +16,19 @@ classifiers = [
     "Topic :: Home Automation",
 ]
 # serialx replaces pyserial and gives us every transport for free: local
-# devices, socket://, and ESPHome serial proxies. Core pins 1.8.2.
+# devices, socket://, and ESPHome serial proxies.
+#
+# A RANGE, never an ==. Home Assistant Core pins serialx centrally (1.10.0 as of
+# 2026-09) and applies that pin as a pip *constraint*, which can only narrow a
+# requirement, never relax it. An exact pin here would intersect with Core's to
+# the empty set and fail to install. Note this is the opposite of the rule for
+# the integration's own manifest, where the requirement on THIS package must be
+# exactly pinned.
+#
+# The floor is inherited from whatever Core pinned when this was first written,
+# not derived from the minimum release that carries the one call we make
+# (`open_serial_connection(url=, baudrate=, key=)`). It is therefore possibly
+# over-tight and possibly too loose; nobody has checked.
 dependencies = ["serialx>=1.8.2,<2"]
 
 [project.optional-dependencies]

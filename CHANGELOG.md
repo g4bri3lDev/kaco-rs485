@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/g4bri3lDev/kaco-rs485/compare/v0.4.0...v0.5.0) (2026-09-10)
+
+
+### Features
+
+* move consumer-side derivations into the library ([29b1776](https://github.com/g4bri3lDev/kaco-rs485/commit/29b177691fb58e94112e809ef6a0703aea9b76fa))
+* record per-inverter reply latency on InverterState ([b2cea9a](https://github.com/g4bri3lDev/kaco-rs485/commit/b2cea9a5873baa4991303975bab7d5e7865a4b67))
+
 ## [0.4.0](https://github.com/g4bri3lDev/kaco-rs485/compare/v0.3.0...v0.4.0) (2026-09-10)
 
 

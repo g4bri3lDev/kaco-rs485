@@ -238,8 +238,14 @@ class AsyncBus:
     async def _discard_stale(self) -> None:
         """Drop anything already on the wire before transmitting.
 
-        A straggler reply from the previous poll, or turnaround glitch bytes,
-        would otherwise be parsed as the head of the next reply.
+        Clears turnaround glitch bytes and a reply that arrived while we were
+        not reading. It is not what protects against a stale frame being
+        mistaken for the next reply: the window here is 10 ms, and this proxy
+        has been observed re-delivering a frame 13 s late (2026-09-12, see
+        `tests/reference/20260912_lan_duplicate_frame.json`). What actually
+        protects is that `framing.is_complete` is command-specific and every
+        parser checks the echoed command byte, so a stale frame is rejected and
+        retried. A command added without a framing rule would lose that.
         """
         assert self._reader is not None
         while True:

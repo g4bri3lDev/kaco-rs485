@@ -1,0 +1,343 @@
+[
+ {
+  "address": 1,
+  "command": "0",
+  "responded": true,
+  "bytes": 66,
+  "elapsed_ms": 300.5,
+  "first_byte_ms": 266.5,
+  "max_gap_ms": 8.3,
+  "arrivals": [
+   [
+    266.5,
+    32
+   ],
+   [
+    274.1,
+    8
+   ],
+   [
+    278.0,
+    8
+   ],
+   [
+    286.1,
+    8
+   ],
+   [
+    294.4,
+    8
+   ],
+   [
+    300.5,
+    2
+   ]
+  ],
+  "rx_hex": "0a2a30313020202034203336362e312020302e3738202020323835203233312e372020312e3239202020323535202033332020313039373920aa203634303078690d",
+  "decoded": "6400xi [MPP tracking] dc=285W ac=255W 231.7V 33degC daily=10979Wh  CHK ok"
+ },
+ {
+  "address": 1,
+  "command": "3",
+  "responded": true,
+  "bytes": 59,
+  "elapsed_ms": 312.8,
+  "first_byte_ms": 281.4,
+  "max_gap_ms": 10.1,
+  "arrivals": [
+   [
+    281.4,
+    32
+   ],
+   [
+    290.2,
+    8
+   ],
+   [
+    295.9,
+    8
+   ],
+   [
+    306.1,
+    8
+   ],
+   [
+    312.8,
+    3
+   ]
+  ],
+  "rx_hex": "0a202032393738202031303937392020393532353520203935323535202020202020393a3432202037333931333a3036202037333931333a30360d",
+  "decoded": "peak=2978W daily=10979Wh total=95255 (kWh on xi, Wh on blueplanet) uptime=73913:06"
+ },
+ {
+  "address": 1,
+  "command": "8",
+  "responded": true,
+  "bytes": 21,
+  "elapsed_ms": 284.9,
+  "first_byte_ms": 284.9,
+  "max_gap_ms": null,
+  "arrivals": [
+   [
+    284.9,
+    21
+   ]
+  ],
+  "rx_hex": "0a2a303138204b3232322e3336444520363831370d",
+  "decoded": "K222.36DE 6817"
+ },
+ {
+  "address": 1,
+  "command": "9",
+  "responded": true,
+  "bytes": 15,
+  "elapsed_ms": 516.9,
+  "first_byte_ms": 50.4,
+  "max_gap_ms": 66.1,
+  "arrivals": [
+   [
+    50.4,
+    8
+   ],
+   [
+    116.4,
+    7
+   ]
+  ],
+  "rx_hex": "0a2a3031392036343030786920af0d",
+  "decoded": "6400xi"
+ },
+ {
+  "address": 1,
+  "command": "s",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 2,
+  "command": "0",
+  "responded": true,
+  "bytes": 66,
+  "elapsed_ms": 313.5,
+  "first_byte_ms": 290.8,
+  "max_gap_ms": 13.2,
+  "arrivals": [
+   [
+    290.8,
+    40
+   ],
+   [
+    304.0,
+    16
+   ],
+   [
+    308.2,
+    8
+   ],
+   [
+    313.5,
+    2
+   ]
+  ],
+  "rx_hex": "0a2a30323020202034203337342e332020312e3630202020353938203233322e322020322e3433202020353437202033382020323139353820ac203634303078690d",
+  "decoded": "6400xi [MPP tracking] dc=598W ac=547W 232.2V 38degC daily=21958Wh  CHK ok"
+ },
+ {
+  "address": 2,
+  "command": "3",
+  "responded": true,
+  "bytes": 59,
+  "elapsed_ms": 329.3,
+  "first_byte_ms": 293.9,
+  "max_gap_ms": 10.2,
+  "arrivals": [
+   [
+    293.9,
+    24
+   ],
+   [
+    302.4,
+    8
+   ],
+   [
+    308.6,
+    8
+   ],
+   [
+    316.2,
+    8
+   ],
+   [
+    326.4,
+    8
+   ],
+   [
+    329.2,
+    3
+   ]
+  ],
+  "rx_hex": "0a202036303532202032313935382031313635383620313136353836202020202020393a3433202037343032393a3338202037343032393a33380d",
+  "decoded": "peak=6052W daily=21958Wh total=116586 (kWh on xi, Wh on blueplanet) uptime=74029:38"
+ },
+ {
+  "address": 2,
+  "command": "8",
+  "responded": true,
+  "bytes": 21,
+  "elapsed_ms": 179.9,
+  "first_byte_ms": 178.7,
+  "max_gap_ms": 1.2,
+  "arrivals": [
+   [
+    178.7,
+    16
+   ],
+   [
+    179.9,
+    5
+   ]
+  ],
+  "rx_hex": "0a2a303238204b3232322e3336444520363831370d",
+  "decoded": "K222.36DE 6817"
+ },
+ {
+  "address": 2,
+  "command": "9",
+  "responded": true,
+  "bytes": 15,
+  "elapsed_ms": 726.4,
+  "first_byte_ms": 325.2,
+  "max_gap_ms": null,
+  "arrivals": [
+   [
+    325.2,
+    15
+   ]
+  ],
+  "rx_hex": "0a2a3032392036343030786920b00d",
+  "decoded": "6400xi"
+ },
+ {
+  "address": 2,
+  "command": "s",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 4,
+  "command": "0",
+  "responded": true,
+  "bytes": 66,
+  "elapsed_ms": 384.8,
+  "first_byte_ms": 315.9,
+  "max_gap_ms": 60.9,
+  "arrivals": [
+   [
+    315.9,
+    8
+   ],
+   [
+    323.9,
+    8
+   ],
+   [
+    384.8,
+    50
+   ]
+  ],
+  "rx_hex": "0a2a30343020202034203439362e362020302e3731202020333532203233322e362020312e333020202032383220203335202031333132352096203830303078690d",
+  "decoded": "8000xi [MPP tracking] dc=352W ac=282W 232.6V 35degC daily=13125Wh  CHK ok"
+ },
+ {
+  "address": 4,
+  "command": "3",
+  "responded": true,
+  "bytes": 59,
+  "elapsed_ms": 325.3,
+  "first_byte_ms": 317.1,
+  "max_gap_ms": 8.2,
+  "arrivals": [
+   [
+    317.1,
+    48
+   ],
+   [
+    325.3,
+    11
+   ]
+  ],
+  "rx_hex": "0a202033363433202031333132352031333631373820313336313738202020202020393a3438202037353435343a3439202037353435343a34390d",
+  "decoded": "peak=3643W daily=13125Wh total=136178 (kWh on xi, Wh on blueplanet) uptime=75454:49"
+ },
+ {
+  "address": 4,
+  "command": "8",
+  "responded": true,
+  "bytes": 21,
+  "elapsed_ms": 209.5,
+  "first_byte_ms": 209.5,
+  "max_gap_ms": null,
+  "arrivals": [
+   [
+    209.5,
+    21
+   ]
+  ],
+  "rx_hex": "0a2a303438204b3232322e3336444520314335460d",
+  "decoded": "K222.36DE 1C5F"
+ },
+ {
+  "address": 4,
+  "command": "9",
+  "responded": true,
+  "bytes": 15,
+  "elapsed_ms": 644.3,
+  "first_byte_ms": 233.9,
+  "max_gap_ms": 9.2,
+  "arrivals": [
+   [
+    233.9,
+    8
+   ],
+   [
+    243.0,
+    7
+   ]
+  ],
+  "rx_hex": "0a2a3034392038303030786920b00d",
+  "decoded": "8000xi"
+ },
+ {
+  "address": 4,
+  "command": "s",
+  "responded": true,
+  "bytes": 59,
+  "elapsed_ms": 2128.4,
+  "first_byte_ms": 1666.2,
+  "max_gap_ms": 60.7,
+  "arrivals": [
+   [
+    1666.2,
+    16
+   ],
+   [
+    1726.9,
+    43
+   ]
+  ],
+  "rx_hex": "0a202032393738202031303938312020393532353520203935323535202020202020393a3432202037333931333a3036202037333931333a30360d",
+  "decoded": ""
+ }
+]

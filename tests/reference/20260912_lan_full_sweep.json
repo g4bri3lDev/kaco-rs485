@@ -1,0 +1,1778 @@
+[
+ {
+  "address": 1,
+  "command": "0",
+  "responded": true,
+  "bytes": 66,
+  "elapsed_ms": 195.4,
+  "first_byte_ms": 162.8,
+  "max_gap_ms": 8.4,
+  "arrivals": [
+   [
+    162.8,
+    32
+   ],
+   [
+    169.5,
+    8
+   ],
+   [
+    175.1,
+    8
+   ],
+   [
+    182.6,
+    8
+   ],
+   [
+    190.9,
+    8
+   ],
+   [
+    195.4,
+    2
+   ]
+  ],
+  "rx_hex": "0a2a30313020202034203338322e352020302e3635202020323438203232362e352020312e313020202032303320203333202031313030312081203634303078690d",
+  "decoded": "6400xi [MPP tracking] dc=248W ac=203W 226.5V 33degC daily=11001Wh  CHK ok"
+ },
+ {
+  "address": 1,
+  "command": "3",
+  "responded": true,
+  "bytes": 59,
+  "elapsed_ms": 314.1,
+  "first_byte_ms": 283.0,
+  "max_gap_ms": 10.6,
+  "arrivals": [
+   [
+    283.0,
+    32
+   ],
+   [
+    291.8,
+    8
+   ],
+   [
+    297.3,
+    8
+   ],
+   [
+    307.9,
+    8
+   ],
+   [
+    314.1,
+    3
+   ]
+  ],
+  "rx_hex": "0a202032393738202031313030312020393532353520203935323535202020202020393a3438202037333931333a3132202037333931333a31320d",
+  "decoded": "peak=2978W daily=11001Wh total=95255 (kWh on xi, Wh on blueplanet) uptime=73913:12"
+ },
+ {
+  "address": 1,
+  "command": "8",
+  "responded": true,
+  "bytes": 21,
+  "elapsed_ms": 285.7,
+  "first_byte_ms": 285.7,
+  "max_gap_ms": null,
+  "arrivals": [
+   [
+    285.7,
+    21
+   ]
+  ],
+  "rx_hex": "0a2a303138204b3232322e3336444520363831370d",
+  "decoded": "K222.36DE 6817"
+ },
+ {
+  "address": 1,
+  "command": "9",
+  "responded": true,
+  "bytes": 15,
+  "elapsed_ms": 512.8,
+  "first_byte_ms": 111.5,
+  "max_gap_ms": null,
+  "arrivals": [
+   [
+    111.5,
+    15
+   ]
+  ],
+  "rx_hex": "0a2a3031392036343030786920af0d",
+  "decoded": "6400xi"
+ },
+ {
+  "address": 2,
+  "command": "0",
+  "responded": true,
+  "bytes": 66,
+  "elapsed_ms": 225.6,
+  "first_byte_ms": 137.7,
+  "max_gap_ms": 63.9,
+  "arrivals": [
+   [
+    137.7,
+    8
+   ],
+   [
+    145.2,
+    8
+   ],
+   [
+    153.4,
+    8
+   ],
+   [
+    161.7,
+    8
+   ],
+   [
+    225.6,
+    34
+   ]
+  ],
+  "rx_hex": "0a2a30323020202034203339302e352020312e3331202020353131203232342e332020322e32342020203436382020333720203232303037208f203634303078690d",
+  "decoded": "6400xi [MPP tracking] dc=511W ac=468W 224.3V 37degC daily=22007Wh  CHK ok"
+ },
+ {
+  "address": 2,
+  "command": "3",
+  "responded": true,
+  "bytes": 59,
+  "elapsed_ms": 419.4,
+  "first_byte_ms": 316.9,
+  "max_gap_ms": 64.0,
+  "arrivals": [
+   [
+    316.9,
+    8
+   ],
+   [
+    327.6,
+    8
+   ],
+   [
+    329.4,
+    8
+   ],
+   [
+    338.2,
+    8
+   ],
+   [
+    348.0,
+    8
+   ],
+   [
+    355.4,
+    8
+   ],
+   [
+    419.4,
+    11
+   ]
+  ],
+  "rx_hex": "0a202036303532202032323030372031313635383620313136353836202020202020393a3439202037343032393a3434202037343032393a34340d",
+  "decoded": "peak=6052W daily=22007Wh total=116586 (kWh on xi, Wh on blueplanet) uptime=74029:44"
+ },
+ {
+  "address": 2,
+  "command": "8",
+  "responded": true,
+  "bytes": 21,
+  "elapsed_ms": 345.4,
+  "first_byte_ms": 334.2,
+  "max_gap_ms": 6.6,
+  "arrivals": [
+   [
+    334.2,
+    8
+   ],
+   [
+    338.8,
+    8
+   ],
+   [
+    345.4,
+    5
+   ]
+  ],
+  "rx_hex": "0a2a303238204b3232322e3336444520363831370d",
+  "decoded": "K222.36DE 6817"
+ },
+ {
+  "address": 2,
+  "command": "9",
+  "responded": true,
+  "bytes": 15,
+  "elapsed_ms": 690.8,
+  "first_byte_ms": 289.5,
+  "max_gap_ms": null,
+  "arrivals": [
+   [
+    289.5,
+    15
+   ]
+  ],
+  "rx_hex": "0a2a3032392036343030786920b00d",
+  "decoded": "6400xi"
+ },
+ {
+  "address": 3,
+  "command": "0",
+  "responded": true,
+  "bytes": 131,
+  "elapsed_ms": 226.0,
+  "first_byte_ms": 125.1,
+  "max_gap_ms": 59.1,
+  "arrivals": [
+   [
+    125.1,
+    48
+   ],
+   [
+    132.8,
+    8
+   ],
+   [
+    135.8,
+    8
+   ],
+   [
+    141.9,
+    8
+   ],
+   [
+    150.6,
+    8
+   ],
+   [
+    163.5,
+    8
+   ],
+   [
+    166.9,
+    8
+   ],
+   [
+    226.0,
+    35
+   ]
+  ],
+  "rx_hex": "0a2a30336e203230203038364c3332203420203437372e382020302e363620202033313720203530362e352020302e363620202033333720203232352e352020312e323620203232342e312020312e323320203232372e352020312e323020202036353420202036353020312e303030202034362e382020333035333620383242440d",
+  "decoded": "Generic CRC16 protocol (not an xi unit \u2014 blueplanet or TL/TR series)"
+ },
+ {
+  "address": 3,
+  "command": "3",
+  "responded": true,
+  "bytes": 67,
+  "elapsed_ms": 239.2,
+  "first_byte_ms": 113.3,
+  "max_gap_ms": 66.1,
+  "arrivals": [
+   [
+    113.3,
+    20
+   ],
+   [
+    122.3,
+    6
+   ],
+   [
+    131.3,
+    6
+   ],
+   [
+    149.4,
+    6
+   ],
+   [
+    215.5,
+    19
+   ],
+   [
+    226.5,
+    6
+   ],
+   [
+    239.2,
+    4
+   ]
+  ],
+  "rx_hex": "0a2a30333320203831343520203330353336203132383632373430203132383632373430203030303031363a3137203031313332363a3332203031313332363a33320d",
+  "decoded": "peak=8145W daily=30536Wh total=12862740 (kWh on xi, Wh on blueplanet) uptime=011326:32"
+ },
+ {
+  "address": 3,
+  "command": "8",
+  "responded": true,
+  "bytes": 56,
+  "elapsed_ms": 190.4,
+  "first_byte_ms": 126.4,
+  "max_gap_ms": 64.0,
+  "arrivals": [
+   [
+    126.4,
+    8
+   ],
+   [
+    190.4,
+    48
+   ]
+  ],
+  "rx_hex": "0a2a3033382041524d2056362e3533204436413520436f6e6669672056362e333132342032463446204453502056342e303820364241300d",
+  "decoded": "ARM V6.53 D6A5 Config V6.3124 2F4F DSP V4.08 6BA0"
+ },
+ {
+  "address": 3,
+  "command": "9",
+  "responded": true,
+  "bytes": 15,
+  "elapsed_ms": 452.7,
+  "first_byte_ms": 41.8,
+  "max_gap_ms": 9.6,
+  "arrivals": [
+   [
+    41.8,
+    8
+   ],
+   [
+    51.5,
+    7
+   ]
+  ],
+  "rx_hex": "0a2a303339203038364c333220550d",
+  "decoded": "086L32"
+ },
+ {
+  "address": 4,
+  "command": "0",
+  "responded": true,
+  "bytes": 66,
+  "elapsed_ms": 297.1,
+  "first_byte_ms": 290.5,
+  "max_gap_ms": 4.0,
+  "arrivals": [
+   [
+    290.5,
+    56
+   ],
+   [
+    293.0,
+    8
+   ],
+   [
+    297.1,
+    2
+   ]
+  ],
+  "rx_hex": "0a2a30343020202034203533362e342020302e3533202020323834203232362e352020312e313120202032323220203334202031333134392093203830303078690d",
+  "decoded": "8000xi [MPP tracking] dc=284W ac=222W 226.5V 34degC daily=13149Wh  CHK ok"
+ },
+ {
+  "address": 4,
+  "command": "3",
+  "responded": true,
+  "bytes": 59,
+  "elapsed_ms": 313.4,
+  "first_byte_ms": 305.5,
+  "max_gap_ms": 7.8,
+  "arrivals": [
+   [
+    305.5,
+    56
+   ],
+   [
+    313.4,
+    3
+   ]
+  ],
+  "rx_hex": "0a202033363433202031333134392031333631373820313336313738202020202020393a3534202037353435343a3535202037353435343a35350d",
+  "decoded": "peak=3643W daily=13149Wh total=136178 (kWh on xi, Wh on blueplanet) uptime=75454:55"
+ },
+ {
+  "address": 4,
+  "command": "8",
+  "responded": true,
+  "bytes": 8,
+  "elapsed_ms": 609.5,
+  "first_byte_ms": 208.3,
+  "max_gap_ms": null,
+  "arrivals": [
+   [
+    208.3,
+    8
+   ]
+  ],
+  "rx_hex": "0a2a303438204b32",
+  "decoded": "K2"
+ },
+ {
+  "address": 4,
+  "command": "9",
+  "responded": true,
+  "bytes": 15,
+  "elapsed_ms": 541.6,
+  "first_byte_ms": 131.0,
+  "max_gap_ms": 9.3,
+  "arrivals": [
+   [
+    131.0,
+    8
+   ],
+   [
+    140.3,
+    7
+   ]
+  ],
+  "rx_hex": "0a2a3034392038303030786920b00d",
+  "decoded": "8000xi"
+ },
+ {
+  "address": 5,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 5,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 5,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2500.4,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 5,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 6,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 6,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 6,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2500.2,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 6,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 7,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 7,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2500.9,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 7,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 7,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 8,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 8,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2500.7,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 8,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.2,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 8,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 9,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 9,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2500.4,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 9,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 9,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.2,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 10,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 10,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.2,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 10,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 10,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 11,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 11,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.2,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 11,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 11,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 12,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 12,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 12,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 12,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.2,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 13,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 13,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 13,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 13,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.2,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 14,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 14,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 14,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.2,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 14,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 15,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 15,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 15,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 15,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.2,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 16,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.2,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 16,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 16,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.2,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 16,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.2,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 17,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 17,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 17,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.2,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 17,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2500.6,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 18,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.1,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 18,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 18,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 18,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.2,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 19,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 19,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.1,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 19,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 19,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 20,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 20,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2500.7,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 20,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 20,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.2,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 21,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 21,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 21,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 21,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2500.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 22,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 22,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2500.5,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 22,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.2,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 22,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.5,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 23,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2500.4,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 23,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 23,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 23,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 24,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 24,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2500.4,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 24,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 24,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.1,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 25,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 25,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 25,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 25,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 26,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 26,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.0,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 26,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 26,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 27,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 27,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2500.6,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 27,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 27,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 28,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 28,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.1,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 28,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 28,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 29,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.2,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 29,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 29,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 29,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 30,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 30,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 30,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 30,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 31,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2500.7,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 31,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.1,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 31,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 31,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 32,
+  "command": "0",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2500.6,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 32,
+  "command": "3",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2504.9,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 32,
+  "command": "8",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2501.3,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ },
+ {
+  "address": 32,
+  "command": "9",
+  "responded": false,
+  "bytes": 0,
+  "elapsed_ms": 2500.4,
+  "first_byte_ms": null,
+  "max_gap_ms": null,
+  "arrivals": [],
+  "rx_hex": "",
+  "decoded": null
+ }
+]

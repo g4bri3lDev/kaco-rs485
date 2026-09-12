@@ -54,7 +54,22 @@ def _load() -> list[Capture]:
     return captures
 
 
+def _load_all_records() -> list[dict]:
+    """Every recorded request, including the ones nothing answered.
+
+    `_load` drops silent replies because they make useless parser fixtures, but
+    a silence is itself a finding — that xi units do not implement a command is
+    only visible as an empty reply.
+    """
+    records: list[dict] = []
+    for path in sorted(REFERENCE_DIR.glob("*.json")):
+        for entry in json.loads(path.read_text()):
+            records.append({**entry, "session": entry.get("session", path.stem)})
+    return records
+
+
 ALL_CAPTURES = _load()
+ALL_RECORDS = _load_all_records()
 
 # Well-formed single cmd `0` replies. The oversized ones (131/133 bytes) are
 # two overlapping replies from the era when the blueplanet still shared

@@ -55,6 +55,10 @@ PROBE_COMMANDS = [
     ("3", "Total yield + hours"),
     ("8", "Firmware"),
     ("9", "Inverter type"),
+    # `s` is deliberately absent. It has no framing rule and no parser, so its
+    # read window accepts anything that arrives — which made it a magnet for
+    # the duplicate frames this proxy occasionally re-delivers, recorded as
+    # serial-number replies. Measured 2026-09-12: xi units do not implement it.
 ]
 
 

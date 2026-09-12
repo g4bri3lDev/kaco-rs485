@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0](https://github.com/g4bri3lDev/kaco-rs485/compare/v0.5.0...v1.0.0) (2026-09-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* probe the bus cheaply first, and re-probe when the silences are suspect
+
+### Features
+
+* probe the bus cheaply first, and re-probe when the silences are suspect ([696b523](https://github.com/g4bri3lDev/kaco-rs485/commit/696b523162e4ceaf70ea713841a1a5220c12aac2))
+
 ## [0.5.0](https://github.com/g4bri3lDev/kaco-rs485/compare/v0.4.0...v0.5.0) (2026-09-10)
 
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.1](https://github.com/g4bri3lDev/kaco-rs485/compare/v1.0.0...v1.0.1) (2026-09-12)
+
+
+### Documentation
+
+* _discard_stale is not what stops a stale frame being misread ([f8ba046](https://github.com/g4bri3lDev/kaco-rs485/commit/f8ba04618d5d6d34f3f739d7584d0839db43ffc1))
+
+
+### Refactoring
+
+* fold the local test doubles onto the shipped one ([5dc23c2](https://github.com/g4bri3lDev/kaco-rs485/commit/5dc23c27ed84d0e81d0d6e41f8d67298035c364e))
+
 ## [1.0.0](https://github.com/g4bri3lDev/kaco-rs485/compare/v0.5.0...v1.0.0) (2026-09-12)
 
 

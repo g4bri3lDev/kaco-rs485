@@ -79,7 +79,9 @@ class Requestable(typing.Protocol):
     including `kaco_rs485.testing.FakeBus` — satisfies it.
     """
 
-    async def request(self, address: int, command: str) -> Reply: ...
+    async def request(
+        self, address: int, command: str, *, start_timeout_s: float | None = None
+    ) -> Reply: ...
 
 
 class BusError(Exception):
@@ -156,12 +158,17 @@ class AsyncBus:
     ) -> None:
         await self.close()
 
-    async def request(self, address: int, command: str) -> Reply:
+    async def request(
+        self, address: int, command: str, *, start_timeout_s: float | None = None
+    ) -> Reply:
         """Send `#<addr><cmd><CR>` and collect the reply.
 
         Returns a Reply with empty `raw` on timeout rather than raising —
         a silent inverter is normal operation (they go dark at night), not an
         error condition.
+
+        `start_timeout_s` overrides the instance default for this request only,
+        so a scan can probe cheaply and re-probe generously.
         """
         if self._reader is None or self._writer is None:
             raise BusError("bus is not open")
@@ -177,7 +184,7 @@ class AsyncBus:
             raise BusError(f"write failed: {err}") from err
 
         t0 = time.monotonic()
-        raw, arrivals = await self._read_reply(command, t0)
+        raw, arrivals = await self._read_reply(command, t0, start_timeout_s)
         return Reply(
             request=frame,
             raw=raw,
@@ -200,14 +207,17 @@ class AsyncBus:
         except Exception as err:
             raise BusError(f"read failed: {err}") from err
 
-    async def _read_reply(self, command: str, t0: float) -> tuple[bytes, list[tuple[float, int]]]:
+    async def _read_reply(
+        self, command: str, t0: float, start_timeout_s: float | None = None
+    ) -> tuple[bytes, list[tuple[float, int]]]:
         assert self._reader is not None
+        start = self._start_timeout_s if start_timeout_s is None else start_timeout_s
         buf = b""
         arrivals: list[tuple[float, int]] = []
         while True:
             # The first byte gets the long window; subsequent bytes only need
             # to clear the inter-byte gap.
-            timeout = self._start_timeout_s if not buf else self._gap_s
+            timeout = start if not buf else self._gap_s
             try:
                 chunk = await asyncio.wait_for(self._reader.read(256), timeout)
             except TimeoutError:

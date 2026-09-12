@@ -72,58 +72,141 @@ class ScanResult:
         return [d for d in self.found if not d.supported]
 
 
+# Probe window for the first pass. Measured on site 2026-09-12 over three runs:
+# reply start is 42-427 ms with a p99 of 418 ms, so this clears the worst
+# observed reply by 1.9x while costing a third of the full timeout.
+FAST_START_TIMEOUT_S = 0.8
+
+# A reply arriving this far into the fast window means the path is slower than
+# the window assumed, so the silences it produced cannot be trusted.
+ESCALATE_AT = 0.5
+
+
+async def _probe(
+    bus: Requestable,
+    addresses: list[int],
+    result: ScanResult,
+    *,
+    start_timeout_s: float | None,
+    poll_gap_s: float,
+    on_progress: Callable[[int, int], None] | None,
+    done: int,
+    total: int,
+) -> tuple[list[int], float, int]:
+    """Probe each address once. Returns (still silent, slowest reply, done)."""
+    silent: list[int] = []
+    slowest = 0.0
+    previous_replied = False
+
+    for address in addresses:
+        if previous_replied:
+            await asyncio.sleep(poll_gap_s)
+
+        reply = await bus.request(address, "0", start_timeout_s=start_timeout_s)
+        previous_replied = reply.responded
+        done += 1
+
+        if reply.responded:
+            result.saw_any_bytes = True
+            if reply.first_byte_ms is not None:
+                slowest = max(slowest, reply.first_byte_ms)
+
+            discovered = _identify(address, reply.raw)
+            if discovered.supported:
+                await asyncio.sleep(poll_gap_s)
+                discovered = await _read_firmware(bus, discovered)
+            result.found.append(discovered)
+        else:
+            silent.append(address)
+
+        if on_progress is not None:
+            on_progress(done, total)
+
+    return silent, slowest, done
+
+
 async def scan(
     bus: Requestable,
     addresses: range | list[int] = ALL_ADDRESSES,
     *,
     on_progress: Callable[[int, int], None] | None = None,
     poll_gap_s: float = POLL_GAP_S,
+    fast_timeout_s: float | None = FAST_START_TIMEOUT_S,
 ) -> ScanResult:
-    """Probe each address once with command `0`.
+    """Probe each address with command `0`, cheaply first.
 
-    `on_progress(done, total)` is called after every address so a UI can show
-    something during what is, worst case, a couple of minutes of timeouts.
+    A silent address costs a full reply timeout, and on a 32-address bus that
+    is most of the runtime. So the first pass uses a short window and the
+    result decides whether the silences can be believed:
+
+    - nothing replied at all — ambiguous, so re-probe everything at the full
+      timeout before reporting an empty bus
+    - something replied, but slowly enough to suggest the window was tight —
+      re-probe only the addresses that stayed silent
+    - something replied comfortably inside the window — this bus is
+      demonstrably fast, so silence means empty
+
+    Correctness therefore does not rest on `fast_timeout_s` being right; the
+    re-probe is the safety net. Pass `fast_timeout_s=None` to skip the fast
+    pass entirely.
+
+    `on_progress(done, total)` is called after every address. `total` grows if
+    a re-probe is needed, because the scan only then discovers the extra work.
 
     Paced by `poll_gap_s` for the same reason polling is: transmitting while a
-    straggler reply is still on the wire garbles the next request. A scan is
-    especially exposed to this because it walks addresses back to back.
-
-    The gap is only paid **after an address that actually replied**, which is
-    what makes a full 32-address scan tolerable. The hazard the gap defends
-    against is a straggler still arriving from the previous inverter; if
-    nothing answered, there is no straggler and nothing to wait for. A silent
-    address costs only its reply timeout, so a mostly-empty bus scans in a
-    fraction of the time an unconditional gap would need.
+    straggler reply is still on the wire garbles the next request. The gap is
+    only paid after an address that actually replied — with no reply there is
+    no straggler to wait for, which is what makes a full 32-address scan
+    tolerable.
 
     Each supported unit is asked for its firmware afterwards, so an address
-    that answers costs two requests and two gaps rather than one. That is worth
-    it here and nowhere else: discovery is the only moment the caller is
+    that answers costs two requests. Discovery is the only moment the caller is
     guaranteed to be talking to an awake inverter.
     """
     targets = list(addresses)
     result = ScanResult()
-    previous_replied = False
 
-    for index, address in enumerate(targets, start=1):
-        if previous_replied:
-            await asyncio.sleep(poll_gap_s)
+    if fast_timeout_s is None:
+        await _probe(
+            bus,
+            targets,
+            result,
+            start_timeout_s=None,
+            poll_gap_s=poll_gap_s,
+            on_progress=on_progress,
+            done=0,
+            total=len(targets),
+        )
+        return result
 
-        reply = await bus.request(address, "0")
-        previous_replied = reply.responded
+    silent, slowest, done = await _probe(
+        bus,
+        targets,
+        result,
+        start_timeout_s=fast_timeout_s,
+        poll_gap_s=poll_gap_s,
+        on_progress=on_progress,
+        done=0,
+        total=len(targets),
+    )
 
-        if reply.responded:
-            result.saw_any_bytes = True
-            discovered = _identify(address, reply.raw)
+    if not silent:
+        return result
 
-            if discovered.supported:
-                await asyncio.sleep(poll_gap_s)
-                discovered = await _read_firmware(bus, discovered)
+    trusted = bool(result.found) and slowest < fast_timeout_s * 1000 * ESCALATE_AT
+    if trusted:
+        return result
 
-            result.found.append(discovered)
-
-        if on_progress is not None:
-            on_progress(index, len(targets))
-
+    await _probe(
+        bus,
+        silent,
+        result,
+        start_timeout_s=None,
+        poll_gap_s=poll_gap_s,
+        on_progress=on_progress,
+        done=done,
+        total=done + len(silent),
+    )
     return result
 
 

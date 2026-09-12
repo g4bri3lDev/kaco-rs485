@@ -166,20 +166,28 @@ class FakeBus:
         await self.close()
         return False
 
-    async def request(self, address: int, command: str) -> Reply:
-        """Answer one request, or raise whatever `request_error` holds."""
+    async def request(
+        self, address: int, command: str, *, start_timeout_s: float | None = None
+    ) -> Reply:
+        """Answer one request, or raise whatever `request_error` holds.
+
+        A reply slower than `start_timeout_s` is reported as silence, because
+        that is what the real transport does: the read window closes first.
+        """
         if self.request_error is not None:
             raise self.request_error
         self.requests.append((address, command))
         raw = self.inverters[address].reply_to(command) if address in self.inverters else b""
 
-        if not raw:
-            # A silent address costs a full start timeout and records no
-            # arrivals, which is what distinguishes it from a fast reply.
+        window_ms = (REPLY_START_TIMEOUT_S if start_timeout_s is None else start_timeout_s) * 1000
+
+        if not raw or self.reply_ms > window_ms:
+            # A silence records no arrivals, which is what distinguishes it
+            # from a reply that merely took its time.
             return Reply(
                 request=build_request(address, command),
                 raw=b"",
-                elapsed_ms=REPLY_START_TIMEOUT_S * 1000,
+                elapsed_ms=window_ms,
                 arrivals=[],
             )
 

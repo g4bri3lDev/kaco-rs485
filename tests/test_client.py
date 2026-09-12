@@ -13,7 +13,7 @@ import pytest
 
 from kaco_rs485 import client as client_module
 from kaco_rs485.client import SLEEP_AFTER_MISSES, SLEEP_RETRY_S, KacoRs485Client
-from kaco_rs485.testing import a_bus
+from kaco_rs485.testing import CannedInverter, FakeBus, a_bus
 from kaco_rs485.transport import Reply
 
 from .conftest import CMD0_CAPTURES, CMD3_CAPTURES, CMD8_XI_CAPTURES
@@ -26,25 +26,20 @@ CMD8_FRAME = CMD8_XI_CAPTURES[0].raw
 CMD8_TEXT = CMD8_FRAME[5:].split(b"\r", 1)[0].strip().decode()
 
 
-class FakeBus:
-    """Answers for the addresses in `alive`, stays silent for the rest."""
+# The frames this module's assertions are written against, as a canned unit.
+XI_UNIT = CannedInverter(
+    name="xi under test",
+    replies={"0": CMD0_FRAME, "3": CMD3_FRAME, "8": CMD8_FRAME},
+)
 
-    def __init__(self, alive: set[int]) -> None:
-        self.alive = alive
-        self.requests: list[tuple[int, str]] = []
 
-    async def request(self, address: int, command: str) -> Reply:
-        self.requests.append((address, command))
-        if address not in self.alive:
-            return Reply(request=b"", raw=b"", elapsed_ms=2500.0)
-        raw = {"0": CMD0_FRAME, "3": CMD3_FRAME, "8": CMD8_FRAME}[command]
-        return Reply(request=b"", raw=raw, elapsed_ms=2000.0)
+def a_test_bus(alive: set[int], **kwargs: Any) -> FakeBus:
+    """The library double, answering for `alive` and silent elsewhere."""
+    return FakeBus({addr: XI_UNIT for addr in alive}, **kwargs)
 
-    def addresses_polled(self) -> set[int]:
-        return {addr for addr, _ in self.requests}
 
-    def commands(self, command: str) -> list[tuple[int, str]]:
-        return [r for r in self.requests if r[1] == command]
+def commands(bus: FakeBus, command: str) -> list[tuple[int, str]]:
+    return [r for r in bus.requests if r[1] == command]
 
 
 @pytest.fixture(autouse=True)
@@ -71,12 +66,12 @@ def fake_clock(monkeypatch: pytest.MonkeyPatch) -> Any:
 
 
 async def test_live_inverters_are_polled_every_cycle() -> None:
-    bus = FakeBus(alive={1, 2, 4})
+    bus = a_test_bus({1, 2, 4})
     client = KacoRs485Client(bus, [1, 2, 4])  # type: ignore[arg-type]
 
     await client.poll_cycle()
 
-    assert bus.addresses_polled() == {1, 2, 4}
+    assert {addr for addr, _ in bus.requests} == {1, 2, 4}
     for state in client.states.values():
         assert state.available
         assert state.consecutive_misses == 0
@@ -85,7 +80,7 @@ async def test_live_inverters_are_polled_every_cycle() -> None:
 
 
 async def test_silent_inverter_becomes_unavailable_after_three_misses() -> None:
-    bus = FakeBus(alive=set())
+    bus = a_test_bus(set())
     client = KacoRs485Client(bus, [1])  # type: ignore[arg-type]
 
     for cycle in range(SLEEP_AFTER_MISSES):
@@ -97,7 +92,7 @@ async def test_silent_inverter_becomes_unavailable_after_three_misses() -> None:
 
 
 async def test_sleeping_inverter_is_skipped_until_the_retry_window(fake_clock: Any) -> None:
-    bus = FakeBus(alive=set())
+    bus = a_test_bus(set())
     client = KacoRs485Client(bus, [1])  # type: ignore[arg-type]
 
     for _ in range(SLEEP_AFTER_MISSES):
@@ -120,7 +115,7 @@ async def test_sleeping_inverter_is_skipped_until_the_retry_window(fake_clock: A
 
 
 async def test_inverter_recovers_when_the_sun_comes_up(fake_clock: Any) -> None:
-    bus = FakeBus(alive=set())
+    bus = a_test_bus(set())
     client = KacoRs485Client(bus, [1])  # type: ignore[arg-type]
 
     for _ in range(SLEEP_AFTER_MISSES):
@@ -128,7 +123,7 @@ async def test_inverter_recovers_when_the_sun_comes_up(fake_clock: Any) -> None:
         fake_clock.advance(10.0)
     assert not client.states[1].available
 
-    bus.alive.add(1)
+    bus.wake(1, XI_UNIT)
     fake_clock.advance(SLEEP_RETRY_S + 1)
     await client.poll_cycle()
 
@@ -143,7 +138,7 @@ async def test_requests_are_paced(monkeypatch: pytest.MonkeyPatch) -> None:
     Regression guard for the failure that silenced WR2 on-site: transmitting
     while a straggler reply is still on the wire garbles the next request.
     """
-    bus = FakeBus(alive={1, 2, 4})
+    bus = a_test_bus({1, 2, 4})
     client = KacoRs485Client(bus, [1, 2, 4])  # type: ignore[arg-type]
 
     events: list[tuple[str, float]] = []
@@ -172,11 +167,8 @@ async def test_requests_are_paced(monkeypatch: pytest.MonkeyPatch) -> None:
 async def test_parse_errors_do_not_count_as_a_missing_inverter() -> None:
     """A garbled frame means the inverter is there but the bytes were bad."""
 
-    class GarbageBus(FakeBus):
-        async def request(self, address: int, command: str) -> Reply:
-            return Reply(request=b"", raw=b"\n*01" + b"\x00" * 60, elapsed_ms=2000.0)
-
-    bus = GarbageBus(alive={1})
+    garbled = b"\n*01" + b"\x00" * 60
+    bus = FakeBus({1: CannedInverter(name="garbling", replies=dict.fromkeys("038", garbled))})
     client = KacoRs485Client(bus, [1])  # type: ignore[arg-type]
 
     await client.poll_cycle()
@@ -190,40 +182,40 @@ async def test_parse_errors_do_not_count_as_a_missing_inverter() -> None:
 
 
 async def test_firmware_is_read_on_first_contact() -> None:
-    bus = FakeBus(alive={1})
+    bus = a_test_bus({1})
     client = KacoRs485Client(bus, [1])  # type: ignore[arg-type]
 
     await client.poll_cycle()
 
     assert client.states[1].firmware == CMD8_TEXT
-    assert len(bus.commands("8")) == 1
+    assert len(commands(bus, "8")) == 1
 
 
 async def test_firmware_is_not_re_read_every_cycle() -> None:
     """It is static data on a shared bus — asking again costs a slot forever."""
-    bus = FakeBus(alive={1})
+    bus = a_test_bus({1})
     client = KacoRs485Client(bus, [1])  # type: ignore[arg-type]
 
     for _ in range(5):
         await client.poll_cycle()
 
-    assert len(bus.commands("8")) == 1
+    assert len(commands(bus, "8")) == 1
 
 
 async def test_silent_inverter_is_not_asked_for_firmware() -> None:
     """A dark inverter must not pay an extra 2.5 s timeout for static data."""
-    bus = FakeBus(alive=set())
+    bus = a_test_bus(set())
     client = KacoRs485Client(bus, [1])  # type: ignore[arg-type]
 
     await client.poll_cycle()
 
     assert client.states[1].firmware is None
-    assert bus.commands("8") == []
+    assert commands(bus, "8") == []
 
 
 async def test_firmware_is_read_when_a_dark_inverter_wakes(fake_clock: Any) -> None:
     """Set up at dusk, the type is unknown; it must be filled in at sunrise."""
-    bus = FakeBus(alive=set())
+    bus = a_test_bus(set())
     client = KacoRs485Client(bus, [1])  # type: ignore[arg-type]
 
     for _ in range(SLEEP_AFTER_MISSES):
@@ -231,7 +223,7 @@ async def test_firmware_is_read_when_a_dark_inverter_wakes(fake_clock: Any) -> N
         fake_clock.advance(10.0)
     assert client.states[1].firmware is None
 
-    bus.alive.add(1)
+    bus.wake(1, XI_UNIT)
     fake_clock.advance(SLEEP_RETRY_S + 1)
     await client.poll_cycle()
 
@@ -241,14 +233,9 @@ async def test_firmware_is_read_when_a_dark_inverter_wakes(fake_clock: Any) -> N
 async def test_unreadable_firmware_does_not_affect_availability() -> None:
     """Static data is a bonus read; failing it must not mark a live unit dark."""
 
-    class NoFirmwareBus(FakeBus):
-        async def request(self, address: int, command: str) -> Reply:
-            if command == "8":
-                self.requests.append((address, command))
-                return Reply(request=b"", raw=b"", elapsed_ms=2500.0)
-            return await super().request(address, command)
-
-    bus = NoFirmwareBus(alive={1})
+    bus = FakeBus(
+        {1: CannedInverter(name="no firmware", replies={"0": CMD0_FRAME, "3": CMD3_FRAME})}
+    )
     client = KacoRs485Client(bus, [1])  # type: ignore[arg-type]
 
     await client.poll_cycle()
@@ -295,7 +282,7 @@ async def test_silence_is_never_retried() -> None:
     Retrying silence would triple the cost of every dark inverter at night,
     which is exactly what the backoff exists to avoid.
     """
-    bus = FakeBus(alive=set())
+    bus = a_test_bus(set())
     client = KacoRs485Client(bus, [1])  # type: ignore[arg-type]
 
     await client.poll_cycle()
@@ -329,19 +316,13 @@ async def test_persistent_corruption_keeps_the_inverter_available() -> None:
 # --- connection loss -----------------------------------------------------
 
 
-class ExplodingBus:
-    """Fails the way a dropped ESPHome proxy connection does.
+class NotAnOSError(Exception):
+    """How a dropped ESPHome proxy connection actually fails.
 
     aioesphomeapi raises APIConnectionError, which is neither OSError nor
     TimeoutError. Catching only those let it escape the transport and kill a
     long-running poll outright.
     """
-
-    class NotAnOSError(Exception):
-        pass
-
-    async def request(self, address: int, command: str) -> Reply:
-        raise self.NotAnOSError("Not connected to proxy!")
 
 
 async def test_connection_loss_surfaces_as_bus_error() -> None:
@@ -349,7 +330,7 @@ async def test_connection_loss_surfaces_as_bus_error() -> None:
 
     class DeadWriter:
         def write(self, data: bytes) -> None:
-            raise ExplodingBus.NotAnOSError("Not connected to proxy!")
+            raise NotAnOSError("Not connected to proxy!")
 
         async def drain(self) -> None:
             pass

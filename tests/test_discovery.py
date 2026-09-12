@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from kaco_rs485.discovery import ESCALATE_AT, FAST_START_TIMEOUT_S, scan
+from kaco_rs485.testing import CannedInverter, FakeBus
 from kaco_rs485.transport import Reply
 
 from .conftest import ALL_CAPTURES, CMD0_CAPTURES, CMD8_XI_CAPTURES
@@ -21,11 +22,12 @@ GENERIC_FRAME = next(
 )
 
 
-class ScriptedBus:
-    """Answers cmd `0` from `replies`; every supported unit answers cmd `8`.
+class ScriptedBus(FakeBus):
+    """The library double, plus the read window each request was given.
 
-    `firmware` overrides that per address — pass `b""` for a unit that stays
-    silent on command `8`.
+    Only the window recording is local: asserting which pass probed what is
+    the whole point of the calibrated-scan tests, and `FakeBus` has no reason
+    to expose it.
     """
 
     def __init__(
@@ -34,27 +36,29 @@ class ScriptedBus:
         firmware: dict[int, bytes] | None = None,
         reply_ms: float = 100.0,
     ) -> None:
-        self.replies = replies
-        self.firmware = firmware or {}
-        self.reply_ms = reply_ms
-        self.probed: list[int] = []
-        self.requests: list[tuple[int, str]] = []
+        fw = firmware or {}
+        super().__init__(
+            {
+                addr: CannedInverter(
+                    name=f"addr {addr}",
+                    replies={"0": raw, "8": fw.get(addr, CMD8_FRAME)},
+                )
+                for addr, raw in replies.items()
+            },
+            reply_ms=reply_ms,
+        )
         self.windows: list[float | None] = []
 
     async def request(
         self, address: int, command: str, *, start_timeout_s: float | None = None
     ) -> Reply:
-        self.requests.append((address, command))
         self.windows.append(start_timeout_s)
-        if command == "8":
-            raw = self.firmware.get(address, CMD8_FRAME)
-        else:
-            self.probed.append(address)
-            raw = self.replies.get(address, b"")
-        if raw and start_timeout_s is not None and self.reply_ms > start_timeout_s * 1000:
-            raw = b""  # the read window closed before the reply arrived
-        arrivals = [(self.reply_ms, len(raw))] if raw else []
-        return Reply(request=b"", raw=raw, elapsed_ms=self.reply_ms, arrivals=arrivals)
+        return await super().request(address, command, start_timeout_s=start_timeout_s)
+
+    @property
+    def probed(self) -> list[int]:
+        """Addresses asked for measured values, in order."""
+        return [addr for addr, command in self.requests if command == "0"]
 
 
 async def test_a_bus_where_nothing_replies_is_probed_twice() -> None:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from kaco_rs485.discovery import scan
+from kaco_rs485.discovery import ESCALATE_AT, FAST_START_TIMEOUT_S, scan
 from kaco_rs485.transport import Reply
 
 from .conftest import ALL_CAPTURES, CMD0_CAPTURES, CMD8_XI_CAPTURES
@@ -28,26 +28,43 @@ class ScriptedBus:
     silent on command `8`.
     """
 
-    def __init__(self, replies: dict[int, bytes], firmware: dict[int, bytes] | None = None) -> None:
+    def __init__(
+        self,
+        replies: dict[int, bytes],
+        firmware: dict[int, bytes] | None = None,
+        reply_ms: float = 100.0,
+    ) -> None:
         self.replies = replies
         self.firmware = firmware or {}
+        self.reply_ms = reply_ms
         self.probed: list[int] = []
         self.requests: list[tuple[int, str]] = []
+        self.windows: list[float | None] = []
 
-    async def request(self, address: int, command: str) -> Reply:
+    async def request(
+        self, address: int, command: str, *, start_timeout_s: float | None = None
+    ) -> Reply:
         self.requests.append((address, command))
+        self.windows.append(start_timeout_s)
         if command == "8":
             raw = self.firmware.get(address, CMD8_FRAME)
         else:
             self.probed.append(address)
             raw = self.replies.get(address, b"")
-        return Reply(request=b"", raw=raw, elapsed_ms=2000.0)
+        if raw and start_timeout_s is not None and self.reply_ms > start_timeout_s * 1000:
+            raw = b""  # the read window closed before the reply arrived
+        arrivals = [(self.reply_ms, len(raw))] if raw else []
+        return Reply(request=b"", raw=raw, elapsed_ms=self.reply_ms, arrivals=arrivals)
 
 
-async def test_scan_probes_every_address_once() -> None:
+async def test_a_bus_where_nothing_replies_is_probed_twice() -> None:
+    """Silence everywhere is ambiguous, so the fast pass is not believed."""
     bus = ScriptedBus({})
     await scan(bus, range(1, 6), poll_gap_s=0)  # type: ignore[arg-type]
-    assert bus.probed == [1, 2, 3, 4, 5]
+
+    assert bus.probed == [1, 2, 3, 4, 5, 1, 2, 3, 4, 5]
+    assert bus.windows[:5] == [FAST_START_TIMEOUT_S] * 5
+    assert bus.windows[5:] == [None] * 5
 
 
 async def test_scan_identifies_inverter_type() -> None:
@@ -82,11 +99,66 @@ async def test_silent_bus_is_distinguishable_from_a_bus_with_no_inverters() -> N
 
 
 async def test_progress_is_reported_for_every_address() -> None:
+    """Total grows when a re-probe is needed: the work was not known upfront."""
     seen: list[tuple[int, int]] = []
     await scan(
-        ScriptedBus({}), range(1, 6), on_progress=lambda d, t: seen.append((d, t)), poll_gap_s=0
+        ScriptedBus({2: CMD0_FRAME}),
+        range(1, 6),
+        on_progress=lambda d, t: seen.append((d, t)),
+        poll_gap_s=0,
     )  # type: ignore[arg-type]
     assert seen == [(1, 5), (2, 5), (3, 5), (4, 5), (5, 5)]
+
+
+async def test_progress_total_grows_when_the_scan_escalates() -> None:
+    seen: list[tuple[int, int]] = []
+    await scan(
+        ScriptedBus({}),
+        range(1, 4),
+        on_progress=lambda d, t: seen.append((d, t)),
+        poll_gap_s=0,
+    )  # type: ignore[arg-type]
+    assert seen == [(1, 3), (2, 3), (3, 3), (4, 6), (5, 6), (6, 6)]
+
+
+async def test_a_fast_reply_is_trusted_and_nothing_is_re_probed() -> None:
+    """This bus answered well inside the window, so silence means empty."""
+    bus = ScriptedBus({2: CMD0_FRAME}, reply_ms=100.0)
+
+    result = await scan(bus, range(1, 6), poll_gap_s=0)  # type: ignore[arg-type]
+
+    assert [d.address for d in result.supported] == [2]
+    assert bus.probed == [1, 2, 3, 4, 5]
+    probe_windows = [w for w, (_, c) in zip(bus.windows, bus.requests, strict=True) if c == "0"]
+    assert probe_windows == [FAST_START_TIMEOUT_S] * 5
+
+
+async def test_a_reply_near_the_window_re_probes_only_the_silent() -> None:
+    """Slow enough to suggest the window was tight, so the silences are suspect."""
+    slow = FAST_START_TIMEOUT_S * 1000 * ESCALATE_AT + 50
+    bus = ScriptedBus({2: CMD0_FRAME}, reply_ms=slow)
+
+    await scan(bus, range(1, 6), poll_gap_s=0)  # type: ignore[arg-type]
+
+    assert bus.probed == [1, 2, 3, 4, 5, 1, 3, 4, 5]
+
+
+async def test_an_inverter_slower_than_the_fast_pass_is_still_found() -> None:
+    """The whole point of the re-probe: a slow bus must not lose an inverter."""
+    bus = ScriptedBus({2: CMD0_FRAME}, reply_ms=FAST_START_TIMEOUT_S * 1000 + 500)
+
+    result = await scan(bus, range(1, 6), poll_gap_s=0)  # type: ignore[arg-type]
+
+    assert [d.address for d in result.supported] == [2]
+
+
+async def test_the_fast_pass_can_be_skipped() -> None:
+    bus = ScriptedBus({2: CMD0_FRAME})
+
+    await scan(bus, range(1, 4), poll_gap_s=0, fast_timeout_s=None)  # type: ignore[arg-type]
+
+    assert bus.probed == [1, 2, 3]
+    assert all(w is None for w in bus.windows)
 
 
 @pytest.mark.parametrize("garbled", [b"\n*01" + b"\x00" * 60, b"\n*99" + b"\xff" * 60])

@@ -201,11 +201,15 @@ class AsyncBus:
         if self._reader is None:
             raise BusError("bus is not open")
         try:
-            return await asyncio.wait_for(self._reader.read(256), timeout)
+            raw = await asyncio.wait_for(self._reader.read(256), timeout)
         except TimeoutError:
             return b""
         except Exception as err:
             raise BusError(f"read failed: {err}") from err
+
+        if not raw:
+            raise BusError("port closed while listening")
+        return raw
 
     async def _read_reply(
         self, command: str, t0: float, start_timeout_s: float | None = None
@@ -225,8 +229,11 @@ class AsyncBus:
             except Exception as err:
                 raise BusError(f"read failed: {err}") from err
 
-            if not chunk:  # port closed underneath us
-                break
+            # `read` returns nothing only at EOF. Breaking here would hand back
+            # an empty reply, which every caller reads as a silent inverter: a
+            # proxy that went offline would look like a bus asleep for the night.
+            if not chunk:
+                raise BusError("port closed while waiting for a reply")
 
             arrivals.append(((time.monotonic() - t0) * 1000, len(chunk)))
             buf = framing.trim_leading_junk(buf + chunk)

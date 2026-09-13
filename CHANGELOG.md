@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/g4bri3lDev/kaco-rs485/compare/v1.0.1...v1.0.2) (2026-09-13)
+
+
+### Bug fixes
+
+* a closed port is an error, not a silent bus ([d5b338d](https://github.com/g4bri3lDev/kaco-rs485/commit/d5b338dd0468d03c939be9e5fded5a2ed9cad8d7))
+
 ## [1.0.1](https://github.com/g4bri3lDev/kaco-rs485/compare/v1.0.0...v1.0.1) (2026-09-12)
 
 

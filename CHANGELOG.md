@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/g4bri3lDev/kaco-rs485/compare/v1.0.2...v1.0.3) (2026-10-31)
+
+
+### Bug fixes
+
+* drop readings when an inverter goes dark ([c31d02c](https://github.com/g4bri3lDev/kaco-rs485/commit/c31d02c50e811aa424e49252326e89528de0984d))
+
 ## [1.0.2](https://github.com/g4bri3lDev/kaco-rs485/compare/v1.0.1...v1.0.2) (2026-09-13)
 
 

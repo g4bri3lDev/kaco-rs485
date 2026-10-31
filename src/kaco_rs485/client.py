@@ -198,6 +198,12 @@ class KacoRs485Client:
 
         state.consecutive_misses = 0 if answered else state.consecutive_misses + 1
 
+        # Readings belong to the day they were taken: kept past dusk, any reply
+        # at sunrise would make yesterday's values available again.
+        if state.asleep:
+            state.measured = None
+            state.totals = None
+
         if answered and state.firmware is None:
             await self._read_static(state)
 

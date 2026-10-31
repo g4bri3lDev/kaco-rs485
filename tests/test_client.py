@@ -13,6 +13,7 @@ import pytest
 
 from kaco_rs485 import client as client_module
 from kaco_rs485.client import SLEEP_AFTER_MISSES, SLEEP_RETRY_S, KacoRs485Client
+from kaco_rs485.protocol import TotalYield, parse_cmd3
 from kaco_rs485.testing import CannedInverter, FakeBus, a_bus
 from kaco_rs485.transport import Reply
 
@@ -21,6 +22,7 @@ from .conftest import CMD0_CAPTURES, CMD3_CAPTURES, CMD8_XI_CAPTURES
 CMD0_FRAME = CMD0_CAPTURES[0].raw
 CMD3_FRAME = CMD3_CAPTURES[0].raw
 CMD8_FRAME = CMD8_XI_CAPTURES[0].raw
+GARBAGE = b"\n*01" + b"\x00" * 60
 
 # What `parse_cmd8` pulls out of CMD8_FRAME, e.g. "K222.36DE 6817".
 CMD8_TEXT = CMD8_FRAME[5:].split(b"\r", 1)[0].strip().decode()
@@ -130,6 +132,51 @@ async def test_inverter_recovers_when_the_sun_comes_up(fake_clock: Any) -> None:
     assert client.states[1].consecutive_misses == 0
     assert client.states[1].available
     assert client.states[1].measured is not None
+
+
+@pytest.mark.parametrize(
+    ("booting", "expected_totals"),
+    [
+        pytest.param(
+            CannedInverter(name="booting", replies=dict.fromkeys("03", GARBAGE)),
+            None,
+            id="garbled",
+        ),
+        # What the bus showed on site: the measured-values reply is still
+        # silent while the yield counters already answer.
+        pytest.param(
+            CannedInverter(name="booting", replies={"3": CMD3_FRAME}),
+            parse_cmd3(CMD3_FRAME),
+            id="cmd0_silent",
+        ),
+    ],
+)
+async def test_wake_does_not_resurface_yesterdays_readings(
+    fake_clock: Any, booting: CannedInverter, expected_totals: TotalYield | None
+) -> None:
+    """A unit that is awake but has not sent usable values has no readings yet.
+
+    Keeping the pre-dusk values let yesterday's daily yield reappear as today's,
+    which Home Assistant counted a second time.
+    """
+    bus = a_test_bus({1})
+    client = KacoRs485Client(bus, [1])  # type: ignore[arg-type]
+    await client.poll_cycle()
+    assert client.states[1].measured is not None
+
+    bus.silence(1)
+    for _ in range(SLEEP_AFTER_MISSES):
+        fake_clock.advance(10.0)
+        await client.poll_cycle()
+    assert not client.states[1].available
+
+    bus.wake(1, booting)
+    fake_clock.advance(SLEEP_RETRY_S + 1)
+    await client.poll_cycle()
+
+    assert client.states[1].available
+    assert client.states[1].measured is None
+    assert client.states[1].totals == expected_totals
 
 
 async def test_requests_are_paced(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -260,9 +307,6 @@ class FlakyBus:
         self.requests.append((address, command))
         raw = self.script.pop(0) if self.script else CMD0_FRAME
         return Reply(request=b"", raw=raw, elapsed_ms=2000.0)
-
-
-GARBAGE = b"\n*01" + b"\x00" * 60
 
 
 async def test_corrupt_reply_is_retried() -> None:
